@@ -31,7 +31,6 @@
             -webkit-background-clip: text;
             color: transparent;
         }
-        /* 重点：剩余欠款超大卡片 */
         .remaining-hero {
             background: linear-gradient(135deg, #1f6e43 0%, #2f8b60 100%);
             border-radius: 2rem;
@@ -60,7 +59,6 @@
             font-size: 0.8rem;
             color: rgba(255,255,255,0.7);
         }
-        /* 双录入区域 */
         .double-form {
             display: flex;
             flex-wrap: wrap;
@@ -88,7 +86,7 @@
             gap: 0.8rem;
             margin-bottom: 1rem;
         }
-        .form-row input, .form-row select {
+        .form-row input {
             flex: 1;
             padding: 0.7rem 1rem;
             border-radius: 2rem;
@@ -113,8 +111,11 @@
             color: #2a8c5e;
         }
         .btn-outline:hover { background: #e2f3ea; }
-        .btn-danger { background: #c27e6f; }
-        .btn-danger:hover { background: #b1624b; }
+        .btn-small {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.7rem;
+            margin: 0 0.2rem;
+        }
         .action-bar {
             display: flex;
             flex-wrap: wrap;
@@ -130,28 +131,92 @@
         }
         .chart-box { flex: 1; min-width: 280px; }
         canvas { max-height: 300px; width: 100%; }
+        .tables-split {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .table-section {
+            flex: 1;
+            min-width: 280px;
+            background: #fefcf5;
+            border-radius: 1.5rem;
+            padding: 1rem;
+        }
+        .table-section h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+        .repay-header { border-bottom-color: #7bc49a; color: #2c8e5c; }
+        .debt-header { border-bottom-color: #e0a878; color: #c9795e; }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         th, td {
             text-align: left;
-            padding: 0.7rem 0.4rem;
-            border-bottom: 1px solid #d9eadf;
+            padding: 0.5rem 0.3rem;
+            border-bottom: 1px solid #e0eae3;
         }
-        .delete-btn {
+        .action-btn {
             background: none;
             border: none;
-            color: #bf7a67;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            padding: 0 0.2rem;
         }
-        .badge {
-            background: #eef6f1;
+        .edit-btn { color: #3b9b6e; }
+        .delete-btn { color: #bf7a67; }
+        .monthly-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .month-card {
+            flex: 1;
+            min-width: 150px;
+            background: white;
+            border-radius: 1.2rem;
+            padding: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .month-title { font-weight: 700; margin-bottom: 0.5rem; }
+        .repay-month { color: #2c8e5c; }
+        .debt-month { color: #c9795e; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.5rem 0;
             border-radius: 1rem;
-            padding: 0.2rem 0.8rem;
-            font-size: 0.7rem;
+            border: 1px solid #cce6db;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
         }
         .footer-note {
             text-align: center;
@@ -163,6 +228,7 @@
             body { padding: 1rem; }
             .remaining-number { font-size: 2.8rem; }
             .double-form { flex-direction: column; }
+            .tables-split { flex-direction: column; }
         }
     </style>
 </head>
@@ -178,20 +244,17 @@
             </div>
         </div>
 
-        <!-- 🔥 重点：剩余欠款超大显示 -->
         <div class="remaining-hero">
             <div class="remaining-label">💰 当前剩余欠款</div>
             <div class="remaining-number" id="remainingAmount">0.00 <small>元</small></div>
             <div class="remaining-note">📌 每次还款自动减少 · 新增欠款自动增加</div>
         </div>
 
-        <!-- 双入口：还款 + 新增欠款 -->
         <div class="double-form">
-            <!-- 左侧：还款 -->
             <div class="form-box">
                 <div class="form-title">💸 记录还款</div>
                 <div class="form-row">
-                    <input type="date" id="repayDate" placeholder="日期">
+                    <input type="date" id="repayDate">
                     <input type="number" id="repayAmount" step="0.01" placeholder="还款金额">
                 </div>
                 <div class="form-row">
@@ -199,11 +262,10 @@
                     <button class="btn" id="addRepayBtn">✨ 记录还款</button>
                 </div>
             </div>
-            <!-- 右侧：新增欠款 -->
             <div class="form-box">
                 <div class="form-title">📈 新增欠款</div>
                 <div class="form-row">
-                    <input type="date" id="debtDate" placeholder="日期">
+                    <input type="date" id="debtDate">
                     <input type="number" id="debtAmount" step="0.01" placeholder="新增欠款金额">
                 </div>
                 <div class="form-row">
@@ -213,12 +275,11 @@
             </div>
         </div>
 
-        <!-- 双图表 -->
         <div class="charts-row">
             <div class="chart-box card" style="padding: 1rem;">
                 <h3>📊 还款/欠款流水</h3>
                 <canvas id="flowChart" width="400" height="300"></canvas>
-                <div style="margin-top:0.5rem; text-align:center; font-size:0.75rem;">绿色=还款 | 红色=新增欠款</div>
+                <div style="margin-top:0.5rem; text-align:center; font-size:0.75rem;">绿色=还款 | 橙色=新增欠款</div>
             </div>
             <div class="chart-box card" style="padding: 1rem;">
                 <h3>🔮 剩余欠款趋势</h3>
@@ -229,30 +290,55 @@
             </div>
         </div>
 
-        <!-- 月度汇总 + 明细表格 -->
-        <div class="card" style="margin-top:0.5rem;">
-            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; margin-bottom:1rem;">
-                <h3>🗓️ 月度汇总 & 全部流水</h3>
-                <span class="badge">💚 还款为负向，欠款为正向</span>
+        <div class="card" style="margin-bottom:1rem;">
+            <h3>🗓️ 月度汇总</h3>
+            <div id="monthlySummary" class="monthly-stats"></div>
+        </div>
+
+        <div class="tables-split">
+            <div class="table-section">
+                <h4 class="repay-header">💚 还款记录</h4>
+                <div style="overflow-x:auto;">
+                    <table id="repayTable">
+                        <thead><tr><th>日期</th><th>金额(¥)</th><th>备注</th><th>操作</th></tr></thead>
+                        <tbody id="repayTbody"></tbody>
+                    </table>
+                </div>
             </div>
-            <div id="monthlySummary" style="margin-bottom:1.2rem;"></div>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>日期</th><th>类型</th><th>金额(¥)</th><th>备注</th><th></th></tr></thead>
-                    <tbody id="recordsTbody"></tbody>
-                </table>
+            <div class="table-section">
+                <h4 class="debt-header">🧡 新增欠款记录</h4>
+                <div style="overflow-x:auto;">
+                    <table id="debtTable">
+                        <thead><tr><th>日期</th><th>金额(¥)</th><th>备注</th><th>操作</th></tr></thead>
+                        <tbody id="debtTbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        <div class="footer-note">🍀 所有数据保存在浏览器 · 还款减少欠款 · 新增欠款增加欠款 · 自动计算剩余</div>
+        <div class="footer-note">🍀 所有数据保存在浏览器 · 可编辑修改记录 · 自动重新计算剩余欠款</div>
+    </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>✏️ 编辑记录</h3>
+        <input type="date" id="editDate">
+        <input type="number" id="editAmount" step="0.01" placeholder="金额">
+        <input type="text" id="editNote" placeholder="备注">
+        <div class="modal-buttons">
+            <button class="btn btn-outline" id="cancelEditBtn">取消</button>
+            <button class="btn" id="saveEditBtn">保存</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'dynamic_debt_tracker';
-    let records = [];      // 每一条记录：{ id, date, type, amount, note }  type: 'repay' 或 'new_debt'
+    const STORAGE_KEY = 'dynamic_debt_tracker_v3';
+    let records = [];
     let currentRemaining = 0;
+    let editingId = null;
 
-    // DOM
     const remainingSpan = document.getElementById('remainingAmount');
     const repayDate = document.getElementById('repayDate');
     const repayAmount = document.getElementById('repayAmount');
@@ -262,12 +348,19 @@
     const debtAmount = document.getElementById('debtAmount');
     const debtNote = document.getElementById('debtNote');
     const addDebtBtn = document.getElementById('addDebtBtn');
-    const recordsTbody = document.getElementById('recordsTbody');
+    const repayTbody = document.getElementById('repayTbody');
+    const debtTbody = document.getElementById('debtTbody');
     const monthlySummaryDiv = document.getElementById('monthlySummary');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
     const resetBtn = document.getElementById('resetBtn');
     const trendText = document.getElementById('trendText');
+    const editModal = document.getElementById('editModal');
+    const editDate = document.getElementById('editDate');
+    const editAmount = document.getElementById('editAmount');
+    const editNote = document.getElementById('editNote');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const saveEditBtn = document.getElementById('saveEditBtn');
 
     let flowChart = null, remainingChart = null;
 
@@ -294,13 +387,11 @@
     }
 
     function initDefault() {
-        // 示例：初始欠款20000，还款两笔
         records = [
             { id: 'init1', date: '2026-03-10', type: 'new_debt', amount: 20000, note: '初始总欠款' },
             { id: 'init2', date: '2026-03-15', type: 'repay', amount: 1500, note: '首次还款' },
             { id: 'init3', date: '2026-03-22', type: 'repay', amount: 2000, note: '工资还款' },
         ];
-        // 计算剩余欠款：新增欠款总和 - 还款总和
         let totalDebt = 0, totalRepay = 0;
         records.forEach(r => {
             if(r.type === 'new_debt') totalDebt += r.amount;
@@ -351,13 +442,46 @@
         renderAll();
     }
 
+    function openEditModal(id) {
+        const record = records.find(r => r.id == id);
+        if(!record) return;
+        editingId = id;
+        editDate.value = record.date;
+        editAmount.value = record.amount;
+        editNote.value = record.note || '';
+        editModal.style.display = 'flex';
+    }
+
+    function saveEdit() {
+        if(!editingId) return;
+        const newDate = editDate.value;
+        const newAmount = parseFloat(editAmount.value);
+        const newNote = editNote.value.trim();
+        if(!newDate) { alert('请选择日期'); return; }
+        if(isNaN(newAmount) || newAmount <= 0) { alert('请输入有效金额'); return; }
+        const index = records.findIndex(r => r.id == editingId);
+        if(index !== -1) {
+            records[index].date = newDate;
+            records[index].amount = newAmount;
+            records[index].note = newNote || (records[index].type === 'repay' ? '还款' : '新增欠款');
+            records.sort((a,b)=> new Date(a.date) - new Date(b.date));
+            recalcRemaining();
+            renderAll();
+        }
+        closeModal();
+    }
+
+    function closeModal() {
+        editModal.style.display = 'none';
+        editingId = null;
+    }
+
     function renderCharts() {
         const sorted = [...records].sort((a,b)=> new Date(a.date) - new Date(b.date));
         const labels = sorted.map(r => r.date.slice(5));
         const repayData = sorted.map(r => r.type === 'repay' ? r.amount : 0);
         const debtData = sorted.map(r => r.type === 'new_debt' ? r.amount : 0);
         
-        // 流水图
         const ctx1 = document.getElementById('flowChart').getContext('2d');
         if(flowChart) flowChart.destroy();
         flowChart = new Chart(ctx1, {
@@ -365,14 +489,13 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { label: '还款金额 (减少欠款)', data: repayData, backgroundColor: '#7bc49a', borderRadius: 6 },
-                    { label: '新增欠款 (增加欠款)', data: debtData, backgroundColor: '#e0a878', borderRadius: 6 }
+                    { label: '还款金额', data: repayData, backgroundColor: '#7bc49a', borderRadius: 6 },
+                    { label: '新增欠款', data: debtData, backgroundColor: '#e0a878', borderRadius: 6 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(2)} 元` } } } }
+            options: { responsive: true, maintainAspectRatio: true }
         });
 
-        // 剩余欠款趋势图：每次事件后剩余欠款变化
         let runningDebt = 0;
         let timelinePoints = [];
         let timelineLabels = [];
@@ -391,59 +514,86 @@
                 labels: timelineLabels,
                 datasets: [{ label: '剩余欠款金额', data: timelinePoints, borderColor: '#2f8b60', backgroundColor: 'rgba(47,139,96,0.1)', fill: true, tension: 0.2, pointRadius: 4 }]
             },
-            options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `剩余欠款: ${ctx.raw.toFixed(2)} 元` } } } }
+            options: { responsive: true }
         });
-        if(timelinePoints.length === 0) trendText.innerText = '📌 暂无流水，添加还款或新增欠款后显示趋势';
-        else trendText.innerText = `📈 当前剩余欠款 ${currentRemaining.toFixed(2)} 元，${timelinePoints.length} 次变动记录`;
+        if(timelinePoints.length === 0) trendText.innerText = '📌 暂无数据';
+        else trendText.innerText = `📈 当前剩余欠款 ${currentRemaining.toFixed(2)} 元`;
     }
 
-    function renderTableAndMonthly() {
-        if(records.length === 0) {
-            recordsTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">暂无记录，点击上方添加还款或新增欠款</td></tr>';
-            monthlySummaryDiv.innerHTML = '<span>暂无数据</span>';
-            return;
-        }
-        // 表格
-        let html = '';
-        records.forEach(rec => {
-            const typeName = rec.type === 'repay' ? '💸 还款' : '📈 新增欠款';
-            const amountCls = rec.type === 'repay' ? 'style="color:#2c8e5c;"' : 'style="color:#c9795e;"';
-            html += `<tr>
-                        <td>${rec.date}</td>
-                        <td>${typeName}</td>
-                        <td ${amountCls}>¥ ${rec.amount.toFixed(2)}</td>
-                        <td>${escapeHtml(rec.note)}</td>
-                        <td><button class="delete-btn" data-id="${rec.id}">🗑️</button></td>
-                     </tr>`;
+    function renderTablesAndMonthly() {
+        const repayRecords = records.filter(r => r.type === 'repay').sort((a,b)=> new Date(b.date) - new Date(a.date));
+        const debtRecords = records.filter(r => r.type === 'new_debt').sort((a,b)=> new Date(b.date) - new Date(a.date));
+        
+        let repayHtml = '';
+        if(repayRecords.length === 0) repayHtml = '<tr><td colspan="4" style="text-align:center;">暂无还款记录</td></tr>';
+        repayRecords.forEach(rec => {
+            repayHtml += `<tr>
+                <td>${rec.date}</td>
+                <td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td>
+                <td>${escapeHtml(rec.note)}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${rec.id}">📝</button>
+                    <button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button>
+                </td>
+            </tr>`;
         });
-        recordsTbody.innerHTML = html;
+        repayTbody.innerHTML = repayHtml;
+        
+        let debtHtml = '';
+        if(debtRecords.length === 0) debtHtml = '<tr><td colspan="4" style="text-align:center;">暂无新增欠款记录</td></tr>';
+        debtRecords.forEach(rec => {
+            debtHtml += `<tr>
+                <td>${rec.date}</td>
+                <td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td>
+                <td>${escapeHtml(rec.note)}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${rec.id}">📝</button>
+                    <button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button>
+                </td>
+            </tr>`;
+        });
+        debtTbody.innerHTML = debtHtml;
+        
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id')));
+        });
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => deleteRecord(btn.getAttribute('data-id')));
         });
-
-        // 月度汇总：按月份聚合 净变化 = 新增欠款 - 还款
-        const monthMap = new Map();
+        
+        const repayByMonth = new Map();
+        const debtByMonth = new Map();
         records.forEach(rec => {
             const ym = rec.date.slice(0,7);
-            let change = 0;
-            if(rec.type === 'new_debt') change = rec.amount;
-            else if(rec.type === 'repay') change = -rec.amount;
-            monthMap.set(ym, (monthMap.get(ym) || 0) + change);
+            if(rec.type === 'repay') {
+                repayByMonth.set(ym, (repayByMonth.get(ym) || 0) + rec.amount);
+            } else if(rec.type === 'new_debt') {
+                debtByMonth.set(ym, (debtByMonth.get(ym) || 0) + rec.amount);
+            }
         });
-        let monthlyHtml = '<div style="display:flex; flex-wrap:wrap; gap:0.7rem;">';
-        for(let [ym, net] of [...monthMap.entries()].sort()) {
-            const netColor = net >=0 ? '#c9795e' : '#2c8e5c';
-            const sign = net >=0 ? '+' : '';
-            monthlyHtml += `<div style="background:#eef3ef; border-radius:1.5rem; padding:0.2rem 1rem;"><strong>${ym}</strong> <span style="color:${netColor};">净变动 ${sign}${net.toFixed(2)} 元</span></div>`;
-        }
-        monthlyHtml += '</div>';
+        const allMonths = new Set([...repayByMonth.keys(), ...debtByMonth.keys()]);
+        const sortedMonths = [...allMonths].sort();
+        
+        let monthlyHtml = '';
+        sortedMonths.forEach(ym => {
+            const repayTotal = repayByMonth.get(ym) || 0;
+            const debtTotal = debtByMonth.get(ym) || 0;
+            monthlyHtml += `
+                <div class="month-card">
+                    <div class="month-title">📅 ${ym}</div>
+                    <div class="repay-month">💚 还款: ¥${repayTotal.toFixed(2)}</div>
+                    <div class="debt-month">🧡 新增欠款: ¥${debtTotal.toFixed(2)}</div>
+                </div>
+            `;
+        });
+        if(sortedMonths.length === 0) monthlyHtml = '<div style="padding:1rem; text-align:center;">暂无数据</div>';
         monthlySummaryDiv.innerHTML = monthlyHtml;
     }
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
     function renderAll() {
-        renderTableAndMonthly();
+        renderTablesAndMonthly();
         renderCharts();
         remainingSpan.innerText = currentRemaining.toFixed(2);
     }
@@ -477,7 +627,6 @@
         }
     }
 
-    // 事件绑定
     addRepayBtn.addEventListener('click', () => {
         const date = repayDate.value;
         const amount = parseFloat(repayAmount.value);
@@ -501,6 +650,9 @@
     exportCsvBtn.addEventListener('click', exportCSV);
     exportExcelBtn.addEventListener('click', exportExcel);
     resetBtn.addEventListener('click', resetAll);
+    cancelEditBtn.addEventListener('click', closeModal);
+    saveEditBtn.addEventListener('click', saveEdit);
+    window.addEventListener('click', (e) => { if(e.target === editModal) closeModal(); });
 
     loadData();
 </script>
