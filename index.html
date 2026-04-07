@@ -2,27 +2,40 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>今天你还款了吗？· 动态欠款管家</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>今天你还款了吗？· 星光还债计划</title>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJS 导出/导入 Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(145deg, #e4f3ec 0%, #cde8dd 100%);
+            background: linear-gradient(145deg, #eef5f1 0%, #d9e8df 100%);
             font-family: 'Inter', sans-serif;
             padding: 2rem 1.5rem;
             color: #1b3e30;
             min-height: 100vh;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .zoom-wrapper {
+            transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            width: 100%;
+            transform-origin: top left;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        /* 毛玻璃卡片 */
         .card {
-            background: rgba(255,255,255,0.96);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(2px);
             border-radius: 2rem;
-            box-shadow: 0 16px 32px rgba(30,58,47,0.12);
+            box-shadow: 0 20px 35px -12px rgba(30, 58, 47, 0.2), 0 0 0 1px rgba(255,255,255,0.5);
             padding: 1.8rem 2rem;
-            border: 1px solid rgba(70,130,100,0.25);
+            transition: all 0.2s;
         }
         h1 {
             font-size: 2rem;
@@ -30,315 +43,243 @@
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
+            letter-spacing: -0.3px;
+            font-weight: 700;
         }
+        /* 剩余欠款卡片 */
         .remaining-hero {
-            background: linear-gradient(135deg, #1f6e43 0%, #2f8b60 100%);
+            background: linear-gradient(125deg, #1b6b45 0%, #2c8e5e 100%);
             border-radius: 2rem;
-            padding: 2rem 2rem;
+            padding: 2rem 1.8rem;
             margin-bottom: 2rem;
             text-align: center;
-            box-shadow: 0 20px 35px rgba(30,70,50,0.25);
+            box-shadow: 0 25px 40px -12px rgba(30,70,50,0.35);
+            border: 1px solid rgba(255,255,240,0.2);
         }
-        .remaining-label {
-            font-size: 1rem;
-            letter-spacing: 2px;
-            color: rgba(255,255,255,0.8);
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-        .remaining-number {
-            font-size: 4.5rem;
-            font-weight: 800;
-            color: white;
-            line-height: 1.2;
-            letter-spacing: -2px;
-            margin: 0.5rem 0;
-        }
+        .remaining-label { font-size: 0.9rem; letter-spacing: 2px; color: rgba(255,255,255,0.85); text-transform: uppercase; font-weight: 500; }
+        .remaining-number { font-size: 4.2rem; font-weight: 800; color: white; line-height: 1.2; letter-spacing: -2px; margin: 0.5rem 0; text-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .remaining-number small { font-size: 1.5rem; font-weight: 500; }
-        .remaining-note {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.7);
+        .encourage-box {
+            background: rgba(255, 250, 235, 0.96);
+            border-radius: 2rem;
+            padding: 0.85rem 1.8rem;
+            margin: 1rem auto 0;
+            display: inline-block;
+            backdrop-filter: blur(4px);
+            font-size: 1rem;
+            font-weight: 500;
+            color: #b45f2b;
+            border-left: 6px solid #f5b042;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+            max-width: 90%;
+            text-align: center;
+            line-height: 1.4;
         }
-        .double-form {
+        /* 顶部栏：左工具组 + 右侧缩放 */
+        .top-bar {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .form-box {
-            flex: 1;
-            background: #f9fefb;
-            border-radius: 1.5rem;
-            padding: 1.2rem 1.5rem;
-            border: 1px solid #cce6db;
-        }
-        .form-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
-        .form-row {
+        .toolbar-group {
             display: flex;
             flex-wrap: wrap;
             gap: 0.8rem;
-            margin-bottom: 1rem;
+            align-items: center;
         }
-        .form-row input {
-            flex: 1;
-            padding: 0.7rem 1rem;
+        .zoom-group {
+            display: flex;
+            gap: 0.6rem;
+            background: #eef3ef;
+            padding: 0.3rem 1rem;
+            border-radius: 3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .btn-icon {
+            background: white;
+            border: none;
+            font-size: 1.2rem;
+            padding: 0.4rem 0.9rem;
             border-radius: 2rem;
-            border: 1.5px solid #cce6db;
-            font-size: 0.9rem;
-            outline: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .form-row input:focus { border-color: #2f8b60; }
+        .btn-icon:hover { background: #e0f0e8; transform: scale(0.97); }
         .btn {
             background: #2a8c5e;
             border: none;
-            padding: 0.7rem 1.5rem;
+            padding: 0.6rem 1.3rem;
             border-radius: 2rem;
             font-weight: 600;
             color: white;
             cursor: pointer;
             transition: 0.2s;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .btn-outline {
             background: transparent;
             border: 1.5px solid #2a8c5e;
             color: #2a8c5e;
         }
-        .btn-outline:hover { background: #e2f3ea; }
-        .btn-small {
-            padding: 0.3rem 0.7rem;
-            font-size: 0.7rem;
-            margin: 0 0.2rem;
-        }
-        .action-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
-        }
-        .charts-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        .chart-box { flex: 1; min-width: 280px; }
-        canvas { max-height: 300px; width: 100%; }
-        .tables-split {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            margin-top: 1rem;
-        }
-        .table-section {
-            flex: 1;
-            min-width: 280px;
-            background: #fefcf5;
-            border-radius: 1.5rem;
-            padding: 1rem;
-        }
-        .table-section h4 {
-            font-size: 1rem;
-            margin-bottom: 0.8rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid;
-        }
+        .btn-outline:hover { background: #e2f3ea; transform: translateY(-1px); }
+        .btn:hover { background: #1e6e49; transform: translateY(-1px); }
+        
+        /* 双录入卡片 */
+        .double-form { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem; }
+        .form-box { flex: 1; background: #ffffffd9; backdrop-filter: blur(2px); border-radius: 1.8rem; padding: 1.3rem 1.6rem; border: 1px solid rgba(100,150,120,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.02);}
+        .form-title { font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; }
+        .star-icon { color: #f5b042; font-size: 1.3rem; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1rem; }
+        .form-row input { flex: 1; padding: 0.75rem 1rem; border-radius: 2rem; border: 1.5px solid #deede5; background: white; outline: none; font-size: 0.9rem; transition: all 0.2s; }
+        .form-row input:focus { border-color: #2f8b60; box-shadow: 0 0 0 3px rgba(47,139,96,0.2); }
+        
+        .charts-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; }
+        .chart-box { flex: 1; min-width: 280px; background: #ffffffea; border-radius: 1.8rem; padding: 1.2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.03); border: 1px solid #ebf3ef; }
+        .chart-box h3 { font-size: 1.2rem; margin-bottom: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 8px;}
+        canvas { max-height: 280px; width: 100%; }
+        
+        .tables-split { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; }
+        .table-section { flex: 1; background: #ffffffea; border-radius: 1.6rem; padding: 1.2rem; border: 1px solid #e2ede6; box-shadow: 0 6px 12px rgba(0,0,0,0.02); }
+        .table-section h4 { margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 2px solid; display: flex; align-items: center; gap: 6px; font-weight: 600;}
         .repay-header { border-bottom-color: #7bc49a; color: #2c8e5c; }
         .debt-header { border-bottom-color: #e0a878; color: #c9795e; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-        }
-        th, td {
-            text-align: left;
-            padding: 0.5rem 0.3rem;
-            border-bottom: 1px solid #e0eae3;
-        }
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0 0.2rem;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { text-align: left; padding: 0.7rem 0.3rem; border-bottom: 1px solid #e8f0eb; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0 0.3rem; margin: 0 2px; transition: 0.1s; border-radius: 0.5rem;}
         .edit-btn { color: #3b9b6e; }
         .delete-btn { color: #bf7a67; }
-        .monthly-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .month-card {
-            flex: 1;
-            min-width: 150px;
-            background: white;
-            border-radius: 1.2rem;
-            padding: 0.8rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .month-title { font-weight: 700; margin-bottom: 0.5rem; }
-        .repay-month { color: #2c8e5c; }
-        .debt-month { color: #c9795e; }
+        .monthly-stats { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.8rem; }
+        .month-card { background: #fefdf9; border-radius: 1.2rem; padding: 0.7rem 1rem; min-width: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #eef3ef; }
+        .month-title { font-weight: 700; margin-bottom: 0.3rem; color:#2c6e4a; }
+        
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(30,40,35,0.6);
+            backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
         .modal-content {
             background: white;
-            border-radius: 1.5rem;
+            border-radius: 2rem;
             padding: 1.5rem;
             width: 90%;
             max-width: 400px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
         }
-        .modal-content input {
-            width: 100%;
-            padding: 0.7rem;
-            margin: 0.5rem 0;
-            border-radius: 1rem;
-            border: 1px solid #cce6db;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-            margin-top: 1rem;
-        }
-        .footer-note {
-            text-align: center;
-            font-size: 0.7rem;
-            color: #5f8a74;
-            margin-top: 2rem;
-        }
+        .modal-content input { width: 100%; padding: 0.7rem; margin: 0.5rem 0; border-radius: 1.2rem; border: 1.5px solid #ddebe3; outline: none; }
+        .footer-note { text-align: center; font-size: 0.7rem; color: #6d9a84; margin-top: 2rem; padding-top: 0.8rem; border-top: 1px dashed #cde0d6; }
         @media (max-width: 700px) {
             body { padding: 1rem; }
-            .remaining-number { font-size: 2.8rem; }
-            .double-form { flex-direction: column; }
-            .tables-split { flex-direction: column; }
+            .remaining-number { font-size: 2.5rem; }
+            .top-bar { flex-direction: column; align-items: stretch; }
+            .toolbar-group { justify-content: flex-start; }
+            .zoom-group { justify-content: flex-end; }
         }
     </style>
 </head>
 <body>
+<div class="zoom-wrapper" id="zoomWrapper">
 <div class="container">
     <div class="card">
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; margin-bottom: 1rem;">
-            <h1>🌱 今天你还款了吗？</h1>
-            <div class="action-bar">
+        <!-- 顶部栏：左侧工具组 / 右侧缩放按钮 -->
+        <div class="top-bar">
+            <div class="toolbar-group">
+                <button class="btn btn-outline" id="importDataBtn">📂 导入数据</button>
                 <button class="btn btn-outline" id="exportCsvBtn">📎 导出CSV</button>
                 <button class="btn btn-outline" id="exportExcelBtn">📊 导出Excel</button>
-                <button class="btn btn-outline" id="resetBtn">🔄 重置所有数据</button>
+                <button class="btn btn-outline" id="resetBtn">🔄 重置演示</button>
+                <input type="file" id="importFileInput" accept=".json, .csv, .xlsx, .xls, image/png, image/jpeg, application/pdf" style="display:none" />
+            </div>
+            <div class="zoom-group">
+                <button class="btn-icon" id="zoomOutBtn" title="缩小页面">🔍−</button>
+                <span style="font-size:0.8rem; font-weight:500;">缩放</span>
+                <button class="btn-icon" id="zoomInBtn" title="放大页面">🔍+</button>
+                <button class="btn-icon" id="resetZoomBtn" title="重置">↺</button>
             </div>
         </div>
 
+        <div style="margin-bottom: 0.2rem;">
+            <h1>🌱 今天你还款了吗？</h1>
+        </div>
+
+        <!-- 剩余欠款 + 鼓励文案 -->
         <div class="remaining-hero">
             <div class="remaining-label">💰 当前剩余欠款</div>
             <div class="remaining-number" id="remainingAmount">0.00 <small>元</small></div>
-            <div class="remaining-note">📌 每次还款自动减少 · 新增欠款自动增加</div>
+            <div class="encourage-box" id="encourageMessage">
+                🌟 每一笔还款，都是一颗星星，点亮自由的路。
+            </div>
         </div>
 
+        <!-- 双录入 -->
         <div class="double-form">
             <div class="form-box">
-                <div class="form-title">💸 记录还款</div>
+                <div class="form-title"><span class="star-icon">⭐</span> 记录还款</div>
                 <div class="form-row">
                     <input type="date" id="repayDate">
                     <input type="number" id="repayAmount" step="0.01" placeholder="还款金额">
                 </div>
                 <div class="form-row">
-                    <input type="text" id="repayNote" placeholder="备注（可选）">
+                    <input type="text" id="repayNote" placeholder="备注（选填）">
                     <button class="btn" id="addRepayBtn">✨ 记录还款</button>
                 </div>
             </div>
             <div class="form-box">
-                <div class="form-title">📈 新增欠款</div>
+                <div class="form-title"><span class="star-icon">⭐</span> 新增欠款</div>
                 <div class="form-row">
                     <input type="date" id="debtDate">
                     <input type="number" id="debtAmount" step="0.01" placeholder="新增欠款金额">
                 </div>
                 <div class="form-row">
-                    <input type="text" id="debtNote" placeholder="备注（例如：借款/消费）">
+                    <input type="text" id="debtNote" placeholder="备注（借款/消费）">
                     <button class="btn" id="addDebtBtn">➕ 新增欠款</button>
                 </div>
             </div>
         </div>
 
+        <!-- 双图表 -->
         <div class="charts-row">
-            <div class="chart-box card" style="padding: 1rem;">
-                <h3>📊 还款/欠款流水</h3>
-                <canvas id="flowChart" width="400" height="300"></canvas>
-                <div style="margin-top:0.5rem; text-align:center; font-size:0.75rem;">绿色=还款 | 橙色=新增欠款</div>
-            </div>
-            <div class="chart-box card" style="padding: 1rem;">
-                <h3>🔮 剩余欠款趋势</h3>
-                <canvas id="remainingChart" width="400" height="300"></canvas>
-                <div style="margin-top:0.8rem; background:#ebf4ef; border-radius:1.5rem; padding:0.5rem; text-align:center;">
-                    <span id="trendText">📌 记录还款和欠款，趋势自动更新</span>
-                </div>
-            </div>
+            <div class="chart-box"><h3>📊 还款/欠款流水</h3><canvas id="flowChart"></canvas><div style="font-size:0.7rem; text-align:center; margin-top:0.5rem;">💚 绿色=还款 &nbsp;|&nbsp; 🧡 橙色=新增欠款</div></div>
+            <div class="chart-box"><h3>🔮 剩余欠款趋势</h3><canvas id="remainingChart"></canvas><div style="margin-top:0.6rem; background:#edf6f1; border-radius:1.5rem; padding:0.3rem; text-align:center;"><span id="trendText"></span></div></div>
         </div>
 
-        <div class="card" style="margin-bottom:1rem;">
+        <!-- 月度汇总 -->
+        <div class="card" style="margin-bottom:1rem; padding:1.2rem 1.5rem;">
             <h3>🗓️ 月度汇总</h3>
             <div id="monthlySummary" class="monthly-stats"></div>
         </div>
 
+        <!-- 两个表格 -->
         <div class="tables-split">
-            <div class="table-section">
-                <h4 class="repay-header">💚 还款记录</h4>
-                <div style="overflow-x:auto;">
-                    <table id="repayTable">
-                        <thead><tr><th>日期</th><th>金额(¥)</th><th>备注</th><th>操作</th></tr></thead>
-                        <tbody id="repayTbody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="table-section">
-                <h4 class="debt-header">🧡 新增欠款记录</h4>
-                <div style="overflow-x:auto;">
-                    <table id="debtTable">
-                        <thead><tr><th>日期</th><th>金额(¥)</th><th>备注</th><th>操作</th></tr></thead>
-                        <tbody id="debtTbody"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="table-section"><h4 class="repay-header">⭐ 还款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></thead><tbody id="repayTbody"></tbody></table></div>
+            <div class="table-section"><h4 class="debt-header">⭐ 新增欠款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></thead><tbody id="debtTbody"></tbody></table></div>
         </div>
-        <div class="footer-note">🍀 所有数据保存在浏览器 · 可编辑修改记录 · 自动重新计算剩余欠款</div>
+        <div class="footer-note">🍀 所有数据保存在浏览器本地 · 可导入/导出备份 · 页面可缩放 · 暖心文案伴你同行</div>
     </div>
+</div>
 </div>
 
 <!-- 编辑弹窗 -->
-<div id="editModal" class="modal">
-    <div class="modal-content">
-        <h3>✏️ 编辑记录</h3>
-        <input type="date" id="editDate">
-        <input type="number" id="editAmount" step="0.01" placeholder="金额">
-        <input type="text" id="editNote" placeholder="备注">
-        <div class="modal-buttons">
-            <button class="btn btn-outline" id="cancelEditBtn">取消</button>
-            <button class="btn" id="saveEditBtn">保存</button>
-        </div>
-    </div>
-</div>
+<div id="editModal" class="modal"><div class="modal-content"><h3>✏️ 编辑记录</h3><input type="date" id="editDate"><input type="number" id="editAmount" step="0.01" placeholder="金额"><input type="text" id="editNote" placeholder="备注"><div class="modal-buttons" style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;"><button class="btn-outline" id="cancelEditBtn">取消</button><button class="btn" id="saveEditBtn">保存</button></div></div></div>
 
 <script>
-    const STORAGE_KEY = 'dynamic_debt_tracker_v3';
+    const STORAGE_KEY = 'dynamic_debt_tracker_v6';
     let records = [];
     let currentRemaining = 0;
     let editingId = null;
 
+    // DOM 元素
     const remainingSpan = document.getElementById('remainingAmount');
     const repayDate = document.getElementById('repayDate');
     const repayAmount = document.getElementById('repayAmount');
@@ -354,22 +295,51 @@
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
     const resetBtn = document.getElementById('resetBtn');
-    const trendText = document.getElementById('trendText');
-    const editModal = document.getElementById('editModal');
-    const editDate = document.getElementById('editDate');
-    const editAmount = document.getElementById('editAmount');
-    const editNote = document.getElementById('editNote');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const saveEditBtn = document.getElementById('saveEditBtn');
+    const importDataBtn = document.getElementById('importDataBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    const trendTextSpan = document.getElementById('trendText');
+    const encourageDiv = document.getElementById('encourageMessage');
+
+    // 缩放
+    const zoomWrapper = document.getElementById('zoomWrapper');
+    let currentZoom = 1;
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    function setZoom(level) {
+        currentZoom = Math.min(1.5, Math.max(0.7, level));
+        zoomWrapper.style.transform = `scale(${currentZoom})`;
+    }
+    zoomInBtn.addEventListener('click', () => setZoom(currentZoom + 0.05));
+    zoomOutBtn.addEventListener('click', () => setZoom(currentZoom - 0.05));
+    resetZoomBtn.addEventListener('click', () => setZoom(1));
 
     let flowChart = null, remainingChart = null;
-
     function setDefaultDate() {
         const today = new Date().toISOString().slice(0,10);
         if(!repayDate.value) repayDate.value = today;
         if(!debtDate.value) debtDate.value = today;
     }
     setDefaultDate();
+
+    function getDynamicMessage(remaining) {
+        if(remaining <= 0) return "🎉 恭喜上岸！你无债一身轻，以后的日子全是阳光！ 🎉";
+        if(remaining < 1000) return "🎉 天啊！剩余欠款不到1000元！胜利就在眼前，你是自己的英雄！";
+        if(remaining < 5000) return "🌟 曙光已至，再攒一波力量，清零近在咫尺！";
+        if(remaining < 20000) return "🍃 不慌不忙，稳扎稳打，你的坚持已经开花结果。";
+        if(remaining < 50000) return "💖 别小看每一笔还款，它们正悄悄重塑你的生活。";
+        return "🌻 长路漫漫，但每一颗还款的星星都在照亮前方。加油！";
+    }
+    function updateEncouragement() {
+        if(currentRemaining <= 0) {
+            encourageDiv.innerHTML = "🎉 太棒了！恭喜还清所有欠款，自由人生从此开启！ 🎉";
+            return;
+        }
+        let msg = getDynamicMessage(currentRemaining);
+        const extra = ["⭐ 你的还款记录，就是最好的成长日记。", "🌸 每一分努力，债务都看得见。", "🌙 今夜好眠，因为你今天又还了一笔。", "✨ 星星点灯，照亮还债的路。"];
+        if(Math.random() < 0.3 && currentRemaining > 1000) msg = msg + " " + extra[Math.floor(Math.random()*extra.length)];
+        encourageDiv.innerHTML = "✨ " + msg;
+    }
 
     function loadData() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -378,19 +348,18 @@
                 const data = JSON.parse(stored);
                 records = data.records || [];
                 currentRemaining = data.currentRemaining || 0;
+                if(records.length === 0) initDefault();
             } catch(e) { initDefault(); }
-        } else {
-            initDefault();
-        }
+        } else { initDefault(); }
         records.sort((a,b)=> new Date(a.date) - new Date(b.date));
+        recalcRemaining(true);
         renderAll();
     }
 
     function initDefault() {
         records = [
-            { id: 'init1', date: '2026-03-10', type: 'new_debt', amount: 20000, note: '初始总欠款' },
-            { id: 'init2', date: '2026-03-15', type: 'repay', amount: 1500, note: '首次还款' },
-            { id: 'init3', date: '2026-03-22', type: 'repay', amount: 2000, note: '工资还款' },
+            { id: 'init1', date: new Date().toISOString().slice(0,10), type: 'new_debt', amount: 28000, note: '初始总欠款' },
+            { id: 'init2', date: new Date().toISOString().slice(0,10), type: 'repay', amount: 1200, note: '首次还款' },
         ];
         let totalDebt = 0, totalRepay = 0;
         records.forEach(r => {
@@ -406,7 +375,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ records, currentRemaining }));
     }
 
-    function recalcRemaining() {
+    function recalcRemaining(skipRender = false) {
         let totalDebt = 0, totalRepay = 0;
         records.forEach(r => {
             if(r.type === 'new_debt') totalDebt += r.amount;
@@ -415,48 +384,39 @@
         currentRemaining = totalDebt - totalRepay;
         if(currentRemaining < 0) currentRemaining = 0;
         remainingSpan.innerText = currentRemaining.toFixed(2);
-        saveToLocal();
+        updateEncouragement();
+        if(!skipRender) saveToLocal(); else saveToLocal();
         return currentRemaining;
     }
 
     function addRecord(type, date, amount, note) {
         if(!date) { alert('请选择日期'); return false; }
         if(isNaN(amount) || amount <= 0) { alert('请输入大于0的金额'); return false; }
-        const newRecord = {
-            id: Date.now() + '' + Math.random(),
-            date: date,
-            type: type,
-            amount: amount,
-            note: note.trim() || (type === 'repay' ? '还款' : '新增欠款')
-        };
+        const newRecord = { id: Date.now() + '' + Math.random(), date, type, amount, note: note.trim() || (type === 'repay' ? '还款' : '新增欠款') };
         records.push(newRecord);
         records.sort((a,b)=> new Date(a.date) - new Date(b.date));
-        recalcRemaining();
+        recalcRemaining(false);
         renderAll();
         return true;
     }
 
-    function deleteRecord(id) {
-        records = records.filter(r => r.id != id);
-        recalcRemaining();
-        renderAll();
-    }
+    function deleteRecord(id) { records = records.filter(r => r.id != id); recalcRemaining(false); renderAll(); }
 
     function openEditModal(id) {
         const record = records.find(r => r.id == id);
         if(!record) return;
         editingId = id;
-        editDate.value = record.date;
-        editAmount.value = record.amount;
-        editNote.value = record.note || '';
-        editModal.style.display = 'flex';
+        document.getElementById('editDate').value = record.date;
+        document.getElementById('editAmount').value = record.amount;
+        document.getElementById('editNote').value = record.note || '';
+        document.getElementById('editModal').style.display = 'flex';
     }
 
     function saveEdit() {
         if(!editingId) return;
-        const newDate = editDate.value;
-        const newAmount = parseFloat(editAmount.value);
-        const newNote = editNote.value.trim();
+        const newDate = document.getElementById('editDate').value;
+        const newAmount = parseFloat(document.getElementById('editAmount').value);
+        const newNote = document.getElementById('editNote').value.trim();
         if(!newDate) { alert('请选择日期'); return; }
         if(isNaN(newAmount) || newAmount <= 0) { alert('请输入有效金额'); return; }
         const index = records.findIndex(r => r.id == editingId);
@@ -465,40 +425,23 @@
             records[index].amount = newAmount;
             records[index].note = newNote || (records[index].type === 'repay' ? '还款' : '新增欠款');
             records.sort((a,b)=> new Date(a.date) - new Date(b.date));
-            recalcRemaining();
+            recalcRemaining(false);
             renderAll();
         }
         closeModal();
     }
 
-    function closeModal() {
-        editModal.style.display = 'none';
-        editingId = null;
-    }
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; editingId = null; }
 
     function renderCharts() {
         const sorted = [...records].sort((a,b)=> new Date(a.date) - new Date(b.date));
         const labels = sorted.map(r => r.date.slice(5));
         const repayData = sorted.map(r => r.type === 'repay' ? r.amount : 0);
         const debtData = sorted.map(r => r.type === 'new_debt' ? r.amount : 0);
-        
         const ctx1 = document.getElementById('flowChart').getContext('2d');
         if(flowChart) flowChart.destroy();
-        flowChart = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: '还款金额', data: repayData, backgroundColor: '#7bc49a', borderRadius: 6 },
-                    { label: '新增欠款', data: debtData, backgroundColor: '#e0a878', borderRadius: 6 }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: true }
-        });
-
-        let runningDebt = 0;
-        let timelinePoints = [];
-        let timelineLabels = [];
+        flowChart = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: '还款金额', data: repayData, backgroundColor: '#7bc49a', borderRadius: 8 }, { label: '新增欠款', data: debtData, backgroundColor: '#e0a878', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true } });
+        let runningDebt = 0, timelinePoints = [], timelineLabels = [];
         for(let r of sorted) {
             if(r.type === 'new_debt') runningDebt += r.amount;
             else if(r.type === 'repay') runningDebt -= r.amount;
@@ -508,152 +451,40 @@
         }
         const ctx2 = document.getElementById('remainingChart').getContext('2d');
         if(remainingChart) remainingChart.destroy();
-        remainingChart = new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: timelineLabels,
-                datasets: [{ label: '剩余欠款金额', data: timelinePoints, borderColor: '#2f8b60', backgroundColor: 'rgba(47,139,96,0.1)', fill: true, tension: 0.2, pointRadius: 4 }]
-            },
-            options: { responsive: true }
-        });
-        if(timelinePoints.length === 0) trendText.innerText = '📌 暂无数据';
-        else trendText.innerText = `📈 当前剩余欠款 ${currentRemaining.toFixed(2)} 元`;
+        remainingChart = new Chart(ctx2, { type: 'line', data: { labels: timelineLabels, datasets: [{ label: '剩余欠款', data: timelinePoints, borderColor: '#2f8b60', backgroundColor: 'rgba(47,139,96,0.08)', fill: true, tension: 0.2, pointRadius: 3 }] } });
+        trendTextSpan.innerText = timelinePoints.length ? `📉 剩余 ${currentRemaining.toFixed(2)} 元，继续攒星光` : '暂无数据';
     }
 
     function renderTablesAndMonthly() {
         const repayRecords = records.filter(r => r.type === 'repay').sort((a,b)=> new Date(b.date) - new Date(a.date));
         const debtRecords = records.filter(r => r.type === 'new_debt').sort((a,b)=> new Date(b.date) - new Date(a.date));
-        
-        let repayHtml = '';
-        if(repayRecords.length === 0) repayHtml = '<tr><td colspan="4" style="text-align:center;">暂无还款记录</td></tr>';
-        repayRecords.forEach(rec => {
-            repayHtml += `<tr>
-                <td>${rec.date}</td>
-                <td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td>
-                <td>${escapeHtml(rec.note)}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${rec.id}">📝</button>
-                    <button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button>
-                </td>
-            </tr>`;
-        });
-        repayTbody.innerHTML = repayHtml;
-        
-        let debtHtml = '';
-        if(debtRecords.length === 0) debtHtml = '<tr><td colspan="4" style="text-align:center;">暂无新增欠款记录</td></tr>';
-        debtRecords.forEach(rec => {
-            debtHtml += `<tr>
-                <td>${rec.date}</td>
-                <td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td>
-                <td>${escapeHtml(rec.note)}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${rec.id}">📝</button>
-                    <button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button>
-                </td>
-            </tr>`;
-        });
-        debtTbody.innerHTML = debtHtml;
-        
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id')));
-        });
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => deleteRecord(btn.getAttribute('data-id')));
-        });
-        
-        const repayByMonth = new Map();
-        const debtByMonth = new Map();
-        records.forEach(rec => {
-            const ym = rec.date.slice(0,7);
-            if(rec.type === 'repay') {
-                repayByMonth.set(ym, (repayByMonth.get(ym) || 0) + rec.amount);
-            } else if(rec.type === 'new_debt') {
-                debtByMonth.set(ym, (debtByMonth.get(ym) || 0) + rec.amount);
-            }
-        });
-        const allMonths = new Set([...repayByMonth.keys(), ...debtByMonth.keys()]);
-        const sortedMonths = [...allMonths].sort();
-        
-        let monthlyHtml = '';
-        sortedMonths.forEach(ym => {
-            const repayTotal = repayByMonth.get(ym) || 0;
-            const debtTotal = debtByMonth.get(ym) || 0;
-            monthlyHtml += `
-                <div class="month-card">
-                    <div class="month-title">📅 ${ym}</div>
-                    <div class="repay-month">💚 还款: ¥${repayTotal.toFixed(2)}</div>
-                    <div class="debt-month">🧡 新增欠款: ¥${debtTotal.toFixed(2)}</div>
-                </div>
-            `;
-        });
-        if(sortedMonths.length === 0) monthlyHtml = '<div style="padding:1rem; text-align:center;">暂无数据</div>';
-        monthlySummaryDiv.innerHTML = monthlyHtml;
+        repayTbody.innerHTML = repayRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
+        debtTbody.innerHTML = debtRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
+        document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id'))));
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteRecord(btn.getAttribute('data-id'))));
+        const repayMonth = new Map(), debtMonth = new Map();
+        records.forEach(r => { const ym = r.date.slice(0,7); if(r.type === 'repay') repayMonth.set(ym, (repayMonth.get(ym)||0) + r.amount); else debtMonth.set(ym, (debtMonth.get(ym)||0) + r.amount); });
+        const allMonths = [...new Set([...repayMonth.keys(), ...debtMonth.keys()])].sort();
+        monthlySummaryDiv.innerHTML = allMonths.map(ym => `<div class="month-card"><div class="month-title">📅 ${ym}</div><div class="repay-month" style="color:#2c8e5c;">⭐ 还款: ¥${(repayMonth.get(ym)||0).toFixed(2)}</div><div class="debt-month" style="color:#c9795e;">⭐ 新增欠款: ¥${(debtMonth.get(ym)||0).toFixed(2)}</div></div>`).join('') || '<div>暂无数据</div>';
     }
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    function renderAll() { renderTablesAndMonthly(); renderCharts(); remainingSpan.innerText = currentRemaining.toFixed(2); updateEncouragement(); }
 
-    function renderAll() {
-        renderTablesAndMonthly();
-        renderCharts();
-        remainingSpan.innerText = currentRemaining.toFixed(2);
-    }
-
-    function exportCSV() {
-        let content = "日期,类型,金额(元),备注\n";
-        records.forEach(r => {
-            content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${r.note.replace(/"/g, '""')}"\n`;
-        });
-        const blob = new Blob(["\uFEFF" + content], {type: "text/csv;charset=utf-8;"});
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = "欠款流水.csv";
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-
-    function exportExcel() {
-        const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note }));
-        const ws = XLSX.utils.json_to_sheet(sheetData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "欠款流水");
-        XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
-    function resetAll() {
-        if(confirm('⚠️ 重置将删除所有记录，恢复初始示例数据，确定吗？')) {
-            initDefault();
-            recalcRemaining();
-            renderAll();
-        }
-    }
-
-    addRepayBtn.addEventListener('click', () => {
-        const date = repayDate.value;
-        const amount = parseFloat(repayAmount.value);
-        const note = repayNote.value;
-        if(addRecord('repay', date, amount, note)) {
-            repayAmount.value = '';
-            repayNote.value = '';
-            setDefaultDate();
-        }
-    });
-    addDebtBtn.addEventListener('click', () => {
-        const date = debtDate.value;
-        const amount = parseFloat(debtAmount.value);
-        const note = debtNote.value;
-        if(addRecord('new_debt', date, amount, note)) {
-            debtAmount.value = '';
-            debtNote.value = '';
-            setDefaultDate();
-        }
-    });
-    exportCsvBtn.addEventListener('click', exportCSV);
-    exportExcelBtn.addEventListener('click', exportExcel);
-    resetBtn.addEventListener('click', resetAll);
-    cancelEditBtn.addEventListener('click', closeModal);
-    saveEditBtn.addEventListener('click', saveEdit);
-    window.addEventListener('click', (e) => { if(e.target === editModal) closeModal(); });
-
+    // 导入导出
+    function exportToJSON() { const dataStr = JSON.stringify({ records, currentRemaining }, null, 2); const blob = new Blob([dataStr], {type: "application/json"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); }
+    function importFromJSON(file) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.records && Array.isArray(data.records)) { records = data.records; currentRemaining = data.currentRemaining ?? 0; records.sort((a,b)=> new Date(a.date) - new Date(b.date)); recalcRemaining(false); renderAll(); alert('✅ 导入成功'); } else throw new Error(); } catch(err) { alert('❌ JSON 格式错误'); } }; reader.readAsText(file); }
+    function importFromExcelCSV(file) { const reader = new FileReader(); reader.onload = function(e) { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet); if(rows.length===0) return; const newRecords = []; for(let row of rows) { let date = row['日期'] || row['date'] || ''; let typeRaw = row['类型'] || row['type'] || ''; let amount = parseFloat(row['金额(元)'] || row['amount'] || 0); let note = row['备注'] || row['note'] || ''; if(date && !isNaN(amount) && amount>0) { let type = (typeRaw === '还款' || typeRaw === 'repay') ? 'repay' : 'new_debt'; newRecords.push({ id: Date.now()+Math.random()+Math.random(), date, type, amount, note }); } } if(newRecords.length) { records = newRecords; recalcRemaining(false); renderAll(); alert(`导入 ${newRecords.length} 条记录`); } else alert('未找到有效数据列'); }; reader.readAsArrayBuffer(file); }
+    importDataBtn.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if(!file) return; const ext = file.name.split('.').pop().toLowerCase(); if(ext === 'json') importFromJSON(file); else if(['xlsx','xls','csv'].includes(ext)) importFromExcelCSV(file); else if(['png','jpg','jpeg','pdf'].includes(ext)) alert('📁 图片/PDF无法直接解析还款数据，建议使用JSON或Excel备份。'); else alert('不支持的格式'); importFileInput.value = ''; });
+    function exportCSV() { let content = "日期,类型,金额(元),备注\n"; records.forEach(r => content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${r.note.replace(/"/g, '""')}"\n`); const blob = new Blob(["\uFEFF" + content], {type: "text/csv"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = "欠款流水.csv"; link.click(); URL.revokeObjectURL(link.href); }
+    function exportExcel() { const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note })); const ws = XLSX.utils.json_to_sheet(sheetData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "欠款流水"); XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`); }
+    function resetAll() { if(confirm('重置将删除所有记录并恢复演示数据，确定吗？')) { initDefault(); recalcRemaining(false); renderAll(); } }
+    addRepayBtn.addEventListener('click', () => { const date=repayDate.value, amt=parseFloat(repayAmount.value), note=repayNote.value; if(addRecord('repay',date,amt,note)){ repayAmount.value=''; repayNote.value=''; setDefaultDate(); } });
+    addDebtBtn.addEventListener('click', () => { const date=debtDate.value, amt=parseFloat(debtAmount.value), note=debtNote.value; if(addRecord('new_debt',date,amt,note)){ debtAmount.value=''; debtNote.value=''; setDefaultDate(); } });
+    exportCsvBtn.addEventListener('click', exportCSV); exportExcelBtn.addEventListener('click', exportExcel); resetBtn.addEventListener('click', resetAll);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeModal); document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+    window.addEventListener('click', (e) => { if(e.target === document.getElementById('editModal')) closeModal(); });
     loadData();
 </script>
 </body>
