@@ -603,4 +603,58 @@
         const repayMonth = new Map(), debtMonth = new Map();
         records.forEach(r => { const ym = r.date.slice(0,7); if(r.type === 'repay') repayMonth.set(ym, (repayMonth.get(ym)||0) + r.amount); else debtMonth.set(ym, (debtMonth.get(ym)||0) + r.amount); });
         const allMonths = [...new Set([...repayMonth.keys(), ...debtMonth.keys()])].sort();
-        monthlySummaryDiv.innerHTML = allMonths.map(ym => `<div class="month-card"><div class="month-title">📅 ${ym}</div><div class="repay-month" style="color:#2c8e5c;">⭐ 还款: ¥${(repayMonth.get(ym)||0).toFixed(2)}</
+        monthlySummaryDiv.innerHTML = allMonths.map(ym => `<div class="month-card"><div class="month-title">📅 ${ym}</div><div class="repay-month" style="color:#2c8e5c;">⭐ 还款: ¥${(repayMonth.get(ym)||0).toFixed(2)}</div><div class="debt-month" style="color:#c9795e;">⭐ 新增欠款: ¥${(debtMonth.get(ym)||0).toFixed(2)}</div></div>`).join('') || '<div>暂无数据</div>';
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    function renderAll() { renderTablesAndMonthly(); renderCharts(); remainingSpan.innerText = currentRemaining.toFixed(2); updateEncouragement(); }
+
+    // 编辑弹窗
+    function openEditModal(id) {
+        const record = records.find(r => r.id == id);
+        if(!record) return;
+        editingId = id;
+        document.getElementById('editDate').value = record.date;
+        document.getElementById('editAmount').value = record.amount;
+        document.getElementById('editNote').value = record.note || '';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+    function saveEdit() {
+        if(!editingId) return;
+        const newDate = document.getElementById('editDate').value;
+        const newAmount = parseFloat(document.getElementById('editAmount').value);
+        const newNote = document.getElementById('editNote').value.trim();
+        if(!newDate) { alert('请选择日期'); return; }
+        if(isNaN(newAmount) || newAmount <= 0) { alert('请输入有效金额'); return; }
+        updateRecordInCloud(editingId, newDate, newAmount, newNote);
+        closeModal();
+    }
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; editingId = null; }
+
+    // 导出功能（本地导出，不涉及云端）
+    function exportToJSON() { const dataStr = JSON.stringify({ records, currentRemaining }, null, 2); const blob = new Blob([dataStr], {type: "application/json"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); }
+    function exportCSV() { let content = "日期,类型,金额(元),备注\n"; records.forEach(r => content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${r.note.replace(/"/g, '""')}"\n`); const blob = new Blob(["\uFEFF" + content], {type: "text/csv"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = "欠款流水.csv"; link.click(); URL.revokeObjectURL(link.href); }
+    function exportExcel() { const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note })); const ws = XLSX.utils.json_to_sheet(sheetData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "欠款流水"); XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`); }
+    
+    // 导入处理
+    function importFromJSON(file) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.records && Array.isArray(data.records)) { importDataToCloud(data.records); } else throw new Error(); } catch(err) { alert('❌ JSON 格式错误'); } }; reader.readAsText(file); }
+    function importFromExcelCSV(file) { const reader = new FileReader(); reader.onload = function(e) { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet); if(rows.length===0) return; const newRecords = []; for(let row of rows) { let date = row['日期'] || row['date'] || ''; let typeRaw = row['类型'] || row['type'] || ''; let amount = parseFloat(row['金额(元)'] || row['amount'] || 0); let note = row['备注'] || row['note'] || ''; if(date && !isNaN(amount) && amount>0) { let type = (typeRaw === '还款' || typeRaw === 'repay') ? 'repay' : 'new_debt'; newRecords.push({ id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random(), date, type, amount, note }); } } if(newRecords.length) { importDataToCloud(newRecords); } else alert('未找到有效数据列'); }; reader.readAsArrayBuffer(file); }
+    
+    importDataBtn.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if(!file) return; const ext = file.name.split('.').pop().toLowerCase(); if(ext === 'json') importFromJSON(file); else if(['xlsx','xls','csv'].includes(ext)) importFromExcelCSV(file); else alert('不支持的格式'); importFileInput.value = ''; });
+
+    // 事件绑定
+    addRepayBtn.addEventListener('click', () => { const date=repayDate.value, amt=parseFloat(repayAmount.value), note=repayNote.value; addRecordToCloud('repay',date,amt,note).then(()=>{ repayAmount.value=''; repayNote.value=''; setDefaultDate(); }); });
+    addDebtBtn.addEventListener('click', () => { const date=debtDate.value, amt=parseFloat(debtAmount.value), note=debtNote.value; addRecordToCloud('new_debt',date,amt,note).then(()=>{ debtAmount.value=''; debtNote.value=''; setDefaultDate(); }); });
+    exportCsvBtn.addEventListener('click', exportCSV);
+    exportExcelBtn.addEventListener('click', exportExcel);
+    resetBtn.addEventListener('click', resetAllData);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+    window.addEventListener('click', (e) => { if(e.target === document.getElementById('editModal')) closeModal(); });
+
+    // 启动：从云端加载数据
+    loadFromCloud();
+</script>
+</body>
+</html>
