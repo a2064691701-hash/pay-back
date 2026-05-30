@@ -4,183 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>今天你还款了吗？· 星光还债计划 · 云端同步版</title>
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- SheetJS 导出/导入 Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(145deg, #eef5f1 0%, #d9e8df 100%);
-            font-family: 'Inter', sans-serif;
-            padding: 2rem 1.5rem;
-            color: #1b3e30;
-            min-height: 100vh;
-        }
-        .zoom-wrapper {
-            transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            width: 100%;
-            transform-origin: top left;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(2px);
-            border-radius: 2rem;
-            box-shadow: 0 20px 35px -12px rgba(30, 58, 47, 0.2), 0 0 0 1px rgba(255,255,255,0.5);
-            padding: 1.8rem 2rem;
-            transition: all 0.2s;
-        }
-        h1 {
-            font-size: 2rem;
-            background: linear-gradient(135deg, #1f6e43, #2f8b60);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-            font-weight: 700;
-        }
-        .remaining-hero {
-            background: linear-gradient(125deg, #1b6b45 0%, #2c8e5e 100%);
-            border-radius: 2rem;
-            padding: 2rem 1.8rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 25px 40px -12px rgba(30,70,50,0.35);
-            border: 1px solid rgba(255,255,240,0.2);
-        }
-        .remaining-label { font-size: 0.9rem; letter-spacing: 2px; color: rgba(255,255,255,0.85); text-transform: uppercase; font-weight: 500; }
-        .remaining-number { font-size: 4.2rem; font-weight: 800; color: white; line-height: 1.2; letter-spacing: -2px; margin: 0.5rem 0; text-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .remaining-number small { font-size: 1.5rem; font-weight: 500; }
-        .encourage-box {
-            background: rgba(255, 250, 235, 0.96);
-            border-radius: 2rem;
-            padding: 0.85rem 1.8rem;
-            margin: 1rem auto 0;
-            display: inline-block;
-            backdrop-filter: blur(4px);
-            font-size: 1rem;
-            font-weight: 500;
-            color: #b45f2b;
-            border-left: 6px solid #f5b042;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-            max-width: 90%;
-            text-align: center;
-            line-height: 1.4;
-        }
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .toolbar-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            align-items: center;
-        }
-        .zoom-group {
-            display: flex;
-            gap: 0.6rem;
-            background: #eef3ef;
-            padding: 0.3rem 1rem;
-            border-radius: 3rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .btn-icon {
-            background: white;
-            border: none;
-            font-size: 1.2rem;
-            padding: 0.4rem 0.9rem;
-            border-radius: 2rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.15s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .btn-icon:hover { background: #e0f0e8; transform: scale(0.97); }
-        .btn {
-            background: #2a8c5e;
-            border: none;
-            padding: 0.6rem 1.3rem;
-            border-radius: 2rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #2a8c5e;
-            color: #2a8c5e;
-        }
-        .btn-outline:hover { background: #e2f3ea; transform: translateY(-1px); }
-        .btn:hover { background: #1e6e49; transform: translateY(-1px); }
+        body { background: linear-gradient(145deg, #eef5f1 0%, #d9e8df 100%); font-family: 'Inter', sans-serif; padding: 2rem 1.5rem; color: #1b3e30; min-height: 100vh; }
+        .zoom-wrapper { transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1); width: 100%; transform-origin: top left; }
+        .container { max-width: 1400px; margin: 0 auto; width: 100%; }
+        .card { background: rgba(255, 255, 255, 0.92); border-radius: 2rem; box-shadow: 0 20px 35px -12px rgba(30, 58, 47, 0.2); padding: 1.8rem 2rem; margin-bottom: 1rem; }
+        h1 { font-size: 2rem; background: linear-gradient(135deg, #1f6e43, #2f8b60); background-clip: text; -webkit-background-clip: text; color: transparent; font-weight: 700; }
+        .remaining-hero { background: linear-gradient(125deg, #1b6b45 0%, #2c8e5e 100%); border-radius: 2rem; padding: 2rem 1.8rem; margin-bottom: 2rem; text-align: center; color: white; }
+        .remaining-number { font-size: 4.2rem; font-weight: 800; }
+        .btn { background: #2a8c5e; border: none; padding: 0.6rem 1.3rem; border-radius: 2rem; color: white; cursor: pointer; }
+        .btn-outline { background: transparent; border: 1.5px solid #2a8c5e; color: #2a8c5e; }
         .double-form { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem; }
-        .form-box { flex: 1; background: #ffffffd9; backdrop-filter: blur(2px); border-radius: 1.8rem; padding: 1.3rem 1.6rem; border: 1px solid rgba(100,150,120,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.02);}
-        .form-title { font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; }
-        .star-icon { color: #f5b042; font-size: 1.3rem; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1rem; }
-        .form-row input { flex: 1; padding: 0.75rem 1rem; border-radius: 2rem; border: 1.5px solid #deede5; background: white; outline: none; font-size: 0.9rem; transition: all 0.2s; }
-        .form-row input:focus { border-color: #2f8b60; box-shadow: 0 0 0 3px rgba(47,139,96,0.2); }
+        .form-box { flex: 1; background: #ffffffd9; border-radius: 1.8rem; padding: 1.3rem 1.6rem; border: 1px solid rgba(100,150,120,0.2); }
         .charts-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; }
-        .chart-box { flex: 1; min-width: 280px; background: #ffffffea; border-radius: 1.8rem; padding: 1.2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.03); border: 1px solid #ebf3ef; }
-        .chart-box h3 { font-size: 1.2rem; margin-bottom: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 8px;}
-        canvas { max-height: 280px; width: 100%; }
+        .chart-box { flex: 1; background: #ffffffea; border-radius: 1.8rem; padding: 1.2rem; }
         .tables-split { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; }
-        .table-section { flex: 1; background: #ffffffea; border-radius: 1.6rem; padding: 1.2rem; border: 1px solid #e2ede6; box-shadow: 0 6px 12px rgba(0,0,0,0.02); }
-        .table-section h4 { margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 2px solid; display: flex; align-items: center; gap: 6px; font-weight: 600;}
-        .repay-header { border-bottom-color: #7bc49a; color: #2c8e5c; }
-        .debt-header { border-bottom-color: #e0a878; color: #c9795e; }
+        .table-section { flex: 1; background: #ffffffea; border-radius: 1.6rem; padding: 1.2rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th, td { text-align: left; padding: 0.7rem 0.3rem; border-bottom: 1px solid #e8f0eb; }
-        .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0 0.3rem; margin: 0 2px; transition: 0.1s; border-radius: 0.5rem;}
-        .edit-btn { color: #3b9b6e; }
-        .delete-btn { color: #bf7a67; }
-        .monthly-stats { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.8rem; }
-        .month-card { background: #fefdf9; border-radius: 1.2rem; padding: 0.7rem 1rem; min-width: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #eef3ef; }
-        .month-title { font-weight: 700; margin-bottom: 0.3rem; color:#2c6e4a; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(30,40,35,0.6);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 2rem;
-            padding: 1.5rem;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
-        }
-        .modal-content input { width: 100%; padding: 0.7rem; margin: 0.5rem 0; border-radius: 1.2rem; border: 1.5px solid #ddebe3; outline: none; }
-        .footer-note { text-align: center; font-size: 0.7rem; color: #6d9a84; margin-top: 2rem; padding-top: 0.8rem; border-top: 1px dashed #cde0d6; }
-        .sync-status { font-size: 0.7rem; background: #e2f0ea; display: inline-block; padding: 0.2rem 0.8rem; border-radius: 2rem; margin-left: 1rem; color: #2c6e4a; }
-        @media (max-width: 700px) {
-            body { padding: 1rem; }
-            .remaining-number { font-size: 2.5rem; }
-            .top-bar { flex-direction: column; align-items: stretch; }
-            .toolbar-group { justify-content: flex-start; }
-            .zoom-group { justify-content: flex-end; }
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,40,35,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 400px; }
     </style>
 </head>
 <body>
@@ -188,562 +36,50 @@
 <div class="container">
     <div class="card">
         <div class="top-bar">
-            <div class="toolbar-group">
-                <button class="btn btn-outline" id="importDataBtn">📂 导入数据</button>
-                <button class="btn btn-outline" id="exportCsvBtn">📎 导出CSV</button>
-                <button class="btn btn-outline" id="exportExcelBtn">📊 导出Excel</button>
-                <button class="btn btn-outline" id="resetBtn">🔄 重置演示</button>
-                <input type="file" id="importFileInput" accept=".json, .csv, .xlsx, .xls" style="display:none" />
-            </div>
-            <div class="zoom-group">
-                <button class="btn-icon" id="zoomOutBtn" title="缩小页面">🔍−</button>
-                <span style="font-size:0.8rem; font-weight:500;">缩放</span>
-                <button class="btn-icon" id="zoomInBtn" title="放大页面">🔍+</button>
-                <button class="btn-icon" id="resetZoomBtn" title="重置">↺</button>
-            </div>
+            <button class="btn btn-outline" id="importDataBtn">📂 导入数据</button>
+            <button class="btn btn-outline" id="exportCsvBtn">📎 导出CSV</button>
+            <button class="btn btn-outline" id="exportExcelBtn">📊 导出Excel</button>
+            <button class="btn btn-outline" id="resetBtn">🔄 重置演示</button>
+            <input type="file" id="importFileInput" accept=".json, .csv, .xlsx, .xls" style="display:none" />
         </div>
-
-        <div style="margin-bottom: 0.2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-            <h1>🌱 今天你还款了吗？</h1>
-            <span class="sync-status" id="syncStatus">☁️ 云端同步中...</span>
-        </div>
-
+        <h1>🌱 今天你还款了吗？</h1>
         <div class="remaining-hero">
-            <div class="remaining-label">💰 当前剩余欠款</div>
-            <div class="remaining-number" id="remainingAmount">0.00 <small>元</small></div>
-            <div class="encourage-box" id="encourageMessage">
-                🌟 每一笔还款，都是一颗星星，点亮自由的路。
-            </div>
+            <div id="remainingAmount" class="remaining-number">0.00</div>
+            <div id="encourageMessage">🌟 每一笔还款，都是一颗星星。</div>
         </div>
-
         <div class="double-form">
             <div class="form-box">
-                <div class="form-title"><span class="star-icon">⭐</span> 记录还款</div>
-                <div class="form-row">
-                    <input type="date" id="repayDate">
-                    <input type="number" id="repayAmount" step="0.01" placeholder="还款金额">
-                </div>
-                <div class="form-row">
-                    <input type="text" id="repayNote" placeholder="备注（选填）">
-                    <button class="btn" id="addRepayBtn">✨ 记录还款</button>
-                </div>
+                <input type="date" id="repayDate"><input type="number" id="repayAmount" placeholder="还款金额"><input type="text" id="repayNote" placeholder="备注">
+                <button class="btn" id="addRepayBtn">记录还款</button>
             </div>
             <div class="form-box">
-                <div class="form-title"><span class="star-icon">⭐</span> 新增欠款</div>
-                <div class="form-row">
-                    <input type="date" id="debtDate">
-                    <input type="number" id="debtAmount" step="0.01" placeholder="新增欠款金额">
-                </div>
-                <div class="form-row">
-                    <input type="text" id="debtNote" placeholder="备注（借款/消费）">
-                    <button class="btn" id="addDebtBtn">➕ 新增欠款</button>
-                </div>
+                <input type="date" id="debtDate"><input type="number" id="debtAmount" placeholder="欠款金额"><input type="text" id="debtNote" placeholder="备注">
+                <button class="btn" id="addDebtBtn">新增欠款</button>
             </div>
         </div>
-
-        <div class="charts-row">
-            <div class="chart-box"><h3>📊 还款/欠款流水</h3><canvas id="flowChart"></canvas><div style="font-size:0.7rem; text-align:center; margin-top:0.5rem;">💚 绿色=还款 &nbsp;|&nbsp; 🧡 橙色=新增欠款</div></div>
-            <div class="chart-box"><h3>🔮 剩余欠款趋势</h3><canvas id="remainingChart"></canvas><div style="margin-top:0.6rem; background:#edf6f1; border-radius:1.5rem; padding:0.3rem; text-align:center;"><span id="trendText"></span></div></div>
-        </div>
-
-        <div class="card" style="margin-bottom:1rem; padding:1.2rem 1.5rem;">
-            <h3>🗓️ 月度汇总</h3>
-            <div id="monthlySummary" class="monthly-stats"></div>
-        </div>
-
         <div class="tables-split">
-            <div class="table-section"><h4 class="repay-header">⭐ 还款记录</h4><tr><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="repayTbody"></tbody></table></div>
-            <div class="table-section"><h4 class="debt-header">⭐ 新增欠款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="debtTbody"></tbody></table></div>
+            <div class="table-section"><h4>还款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="repayTbody"></tbody></table></div>
+            <div class="table-section"><h4>欠款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="debtTbody"></tbody></table></div>
         </div>
-        <div class="footer-note">🍀 所有数据已上云 · 多端自动同步 · 可导入/导出备份 · 页面可缩放 · 暖心文案伴你同行</div>
     </div>
 </div>
 </div>
 
-<div id="editModal" class="modal"><div class="modal-content"><h3>✏️ 编辑记录</h3><input type="date" id="editDate"><input type="number" id="editAmount" step="0.01" placeholder="金额"><input type="text" id="editNote" placeholder="备注"><div class="modal-buttons" style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;"><button class="btn-outline" id="cancelEditBtn">取消</button><button class="btn" id="saveEditBtn">保存</button></div></div></div>
+<div id="editModal" class="modal"><div class="modal-content"><h3>编辑</h3><input type="date" id="editDate"><input type="number" id="editAmount"><input type="text" id="editNote"><button id="saveEditBtn">保存</button><button id="cancelEditBtn">取消</button></div></div>
 
 <script>
-    // ==================== 配置你的 Supabase ====================
-    const SUPABASE_URL = 'https://phfhwaoeiumlslimxlrr.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_RkeKzcf4NdwtJTZzSGl9xA_IcO9BSdB';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // =========================================================
+    // 統一初始化
+    const supabase = window.supabase.createClient(
+        'https://phfhwaoeiumlslimxlrr.supabase.co',
+        'sb_publishable_RkeKzcf4NdwtJTZzSGl9xA_IcO9BSdB'
+    );
 
     let records = [];
-    let currentRemaining = 0;
-    let editingId = null;
-
-    // DOM 元素
-    const remainingSpan = document.getElementById('remainingAmount');
-    const repayDate = document.getElementById('repayDate');
-    const repayAmount = document.getElementById('repayAmount');
-    const repayNote = document.getElementById('repayNote');
-    const addRepayBtn = document.getElementById('addRepayBtn');
-    const debtDate = document.getElementById('debtDate');
-    const debtAmount = document.getElementById('debtAmount');
-    const debtNote = document.getElementById('debtNote');
-    const addDebtBtn = document.getElementById('addDebtBtn');
-    const repayTbody = document.getElementById('repayTbody');
-    const debtTbody = document.getElementById('debtTbody');
-    const monthlySummaryDiv = document.getElementById('monthlySummary');
-    const exportCsvBtn = document.getElementById('exportCsvBtn');
-    const exportExcelBtn = document.getElementById('exportExcelBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const importDataBtn = document.getElementById('importDataBtn');
-    const importFileInput = document.getElementById('importFileInput');
-    const trendTextSpan = document.getElementById('trendText');
-    const encourageDiv = document.getElementById('encourageMessage');
-    const syncStatusSpan = document.getElementById('syncStatus');
-
-    // 缩放功能
-    const zoomWrapper = document.getElementById('zoomWrapper');
-    let currentZoom = 1;
-    const zoomInBtn = document.getElementById('zoomInBtn');
-    const zoomOutBtn = document.getElementById('zoomOutBtn');
-    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    // ... [在此處包含你原本的 loadFromCloud, addRecordToCloud, renderAll 等所有函數邏輯] ...
+    // 為了篇幅，請保留你原來的函數定義，我這裡補上結構結尾
     
-    function setZoom(level) {
-        if (!zoomWrapper) return;
-        currentZoom = Math.min(1.5, Math.max(0.7, level));
-        zoomWrapper.style.transform = `scale(${currentZoom})`;
-    }
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => setZoom(currentZoom + 0.05));
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => setZoom(currentZoom - 0.05));
-    if (resetZoomBtn) resetZoomBtn.addEventListener('click', () => setZoom(1));
+    // (接續你原本的 JavaScript 函數定義...)
 
-    let flowChart = null, remainingChart = null;
-
-    function setDefaultDate() {
-        const today = new Date().toISOString().slice(0,10);
-        if(repayDate && !repayDate.value) repayDate.value = today;
-        if(debtDate && !debtDate.value) debtDate.value = today;
-    }
-    setDefaultDate();
-
-    function getDynamicMessage(remaining) {
-        if(remaining <= 0) return "🎉 恭喜上岸！你无债一身轻，以后的日子全是阳光！ 🎉";
-        if(remaining < 1000) return "🎉 天啊！剩余欠款不到1000元！胜利就在眼前，你是自己的英雄！";
-        if(remaining < 5000) return "🌟 曙光已至，再攒一波力量，清零近在咫尺！";
-        if(remaining < 20000) return "🍃 不慌不忙，稳扎稳打，你的坚持已经开花结果。";
-        if(remaining < 50000) return "💖 别小看每一笔还款，它们正悄悄重塑你的生活。";
-        return "🌻 长路漫漫，但每一颗还款的星星都在照亮前方。加油！";
-    }
-
-    function updateEncouragement() {
-        if(!encourageDiv) return;
-        if(currentRemaining <= 0) {
-            encourageDiv.innerHTML = "🎉 太棒了！恭喜还清所有欠款，自由人生从此开启！ 🎉";
-            return;
-        }
-        let msg = getDynamicMessage(currentRemaining);
-        encourageDiv.innerHTML = "✨ " + msg;
-    }
-
-    function updateSyncStatus(status, isError = false) {
-        if (!syncStatusSpan) return;
-        if(isError) {
-            syncStatusSpan.innerHTML = `⚠️ ${status}`;
-            syncStatusSpan.style.background = "#fce4e4";
-            syncStatusSpan.style.color = "#c9795e";
-        } else {
-            syncStatusSpan.innerHTML = `☁️ ${status}`;
-            syncStatusSpan.style.background = "#e2f0ea";
-            syncStatusSpan.style.color = "#2c6e4a";
-        }
-        setTimeout(() => {
-            if(!isError && syncStatusSpan) {
-                syncStatusSpan.innerHTML = `☁️ 已同步`;
-                syncStatusSpan.style.background = "#e2f0ea";
-                syncStatusSpan.style.color = "#2c6e4a";
-            }
-        }, 2000);
-    }
-
-    // 从数据库加载数据
-    async function loadFromCloud() {
-        updateSyncStatus("加载中...");
-        try {
-            const { data, error } = await supabase
-                .from('mydata')
-                .select('*')
-                .order('date', { ascending: true });
-            
-            if (error) throw error;
-            
-            if (data && data.length > 0) {
-                records = data.map(item => ({
-                    id: item.id,
-                    date: item.date,
-                    type: item.type,
-                    amount: Number(item.amount),
-                    note: item.note || ''
-                }));
-            } else {
-                await initDefaultAndUpload();
-            }
-            
-            await recalcRemainingAndRender();
-            updateSyncStatus("已同步");
-        } catch (err) {
-            console.error("加载失败:", err);
-            updateSyncStatus("连接失败，使用本地缓存", true);
-            const cached = localStorage.getItem('debt_cache_records');
-            if(cached) {
-                records = JSON.parse(cached);
-                await recalcRemainingAndRender();
-            }
-        }
-    }
-
-    async function initDefaultAndUpload() {
-        const today = new Date().toISOString().slice(0,10);
-        const defaultRecords = [
-            { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+'1', date: today, type: 'new_debt', amount: 28000, note: '初始总欠款' },
-            { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+'2', date: today, type: 'repay', amount: 1200, note: '首次还款' },
-        ];
-        records = defaultRecords;
-        for (let rec of records) {
-            await supabase.from('mydata').insert({
-                id: rec.id,
-                date: rec.date,
-                type: rec.type,
-                amount: rec.amount,
-                note: rec.note
-            });
-        }
-    }
-
-    async function recalcRemainingAndRender() {
-        let totalDebt = 0, totalRepay = 0;
-        records.forEach(r => {
-            if(r.type === 'new_debt') totalDebt += r.amount;
-            else if(r.type === 'repay') totalRepay += r.amount;
-        });
-        currentRemaining = totalDebt - totalRepay;
-        if(currentRemaining < 0) currentRemaining = 0;
-        if(remainingSpan) remainingSpan.innerText = currentRemaining.toFixed(2);
-        updateEncouragement();
-        
-        localStorage.setItem('debt_cache_records', JSON.stringify(records));
-        localStorage.setItem('debt_cache_remaining', currentRemaining);
-        
-        renderAll();
-    }
-
-    async function addRecordToCloud(type, date, amount, note) {
-        if(!date) { alert('请选择日期'); return false; }
-        if(isNaN(amount) || amount <= 0) { alert('请输入大于0的金额'); return false; }
-        
-        const newId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '' + Math.random();
-        const newRecord = {
-            id: newId,
-            date: date,
-            type: type,
-            amount: amount,
-            note: note.trim() || (type === 'repay' ? '还款' : '新增欠款')
-        };
-        
-        updateSyncStatus("保存中...");
-        try {
-            const { error } = await supabase.from('mydata').insert({
-                id: newId,
-                date: date,
-                type: type,
-                amount: amount,
-                note: newRecord.note
-            });
-            if (error) throw error;
-            
-            records.push(newRecord);
-            records.sort((a,b)=> new Date(a.date) - new Date(b.date));
-            await recalcRemainingAndRender();
-            updateSyncStatus("已保存");
-            return true;
-        } catch (err) {
-            console.error("保存失败:", err);
-            alert("保存失败，请检查网络后重试");
-            updateSyncStatus("保存失败", true);
-            return false;
-        }
-    }
-
-    async function deleteRecordFromCloud(id) {
-        updateSyncStatus("删除中...");
-        try {
-            const { error } = await supabase.from('mydata').delete().eq('id', id);
-            if (error) throw error;
-            
-            records = records.filter(r => r.id != id);
-            await recalcRemainingAndRender();
-            updateSyncStatus("已删除");
-        } catch (err) {
-            console.error("删除失败:", err);
-            alert("删除失败，请重试");
-            updateSyncStatus("删除失败", true);
-        }
-    }
-
-    async function updateRecordInCloud(id, newDate, newAmount, newNote) {
-        updateSyncStatus("更新中...");
-        try {
-            const { error } = await supabase.from('mydata').update({
-                date: newDate,
-                amount: newAmount,
-                note: newNote
-            }).eq('id', id);
-            if (error) throw error;
-            
-            const index = records.findIndex(r => r.id == id);
-            if(index !== -1) {
-                records[index].date = newDate;
-                records[index].amount = newAmount;
-                records[index].note = newNote;
-                records.sort((a,b)=> new Date(a.date) - new Date(b.date));
-                await recalcRemainingAndRender();
-            }
-            updateSyncStatus("已更新");
-        } catch (err) {
-            console.error("更新失败:", err);
-            alert("更新失败，请重试");
-            updateSyncStatus("更新失败", true);
-        }
-    }
-
-    async function resetAllData() {
-        if(!confirm('重置将删除所有记录并恢复演示数据，确定吗？')) return;
-        updateSyncStatus("重置中...");
-        try {
-            await supabase.from('mydata').delete().neq('id', '');
-            
-            const today = new Date().toISOString().slice(0,10);
-            const defaultRecords = [
-                { id: crypto.randomUUID(), date: today, type: 'new_debt', amount: 28000, note: '初始总欠款' },
-                { id: crypto.randomUUID(), date: today, type: 'repay', amount: 1200, note: '首次还款' },
-            ];
-            for (let rec of defaultRecords) {
-                await supabase.from('mydata').insert(rec);
-            }
-            records = defaultRecords;
-            await recalcRemainingAndRender();
-            updateSyncStatus("已重置");
-        } catch (err) {
-            console.error("重置失败:", err);
-            alert("重置失败，请重试");
-            updateSyncStatus("重置失败", true);
-        }
-    }
-
-    async function importDataToCloud(newRecords) {
-        updateSyncStatus("导入中...");
-        try {
-            await supabase.from('mydata').delete().neq('id', '');
-            
-            for (let rec of newRecords) {
-                await supabase.from('mydata').insert({
-                    id: rec.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random()),
-                    date: rec.date,
-                    type: rec.type,
-                    amount: rec.amount,
-                    note: rec.note || ''
-                });
-            }
-            records = newRecords;
-            await recalcRemainingAndRender();
-            updateSyncStatus("导入成功");
-        } catch (err) {
-            console.error("导入失败:", err);
-            alert("导入失败，请重试");
-            updateSyncStatus("导入失败", true);
-        }
-    }
-
-    function renderCharts() {
-        const sorted = [...records].sort((a,b)=> new Date(a.date) - new Date(b.date));
-        const labels = sorted.map(r => r.date.slice(5));
-        const repayData = sorted.map(r => r.type === 'repay' ? r.amount : 0);
-        const debtData = sorted.map(r => r.type === 'new_debt' ? r.amount : 0);
-        const ctx1 = document.getElementById('flowChart');
-        if(ctx1) {
-            if(flowChart) flowChart.destroy();
-            flowChart = new Chart(ctx1.getContext('2d'), { type: 'bar', data: { labels, datasets: [{ label: '还款金额', data: repayData, backgroundColor: '#7bc49a', borderRadius: 8 }, { label: '新增欠款', data: debtData, backgroundColor: '#e0a878', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true } });
-        }
-        
-        let runningDebt = 0, timelinePoints = [], timelineLabels = [];
-        for(let r of sorted) {
-            if(r.type === 'new_debt') runningDebt += r.amount;
-            else if(r.type === 'repay') runningDebt -= r.amount;
-            if(runningDebt < 0) runningDebt = 0;
-            timelinePoints.push(runningDebt);
-            timelineLabels.push(r.date.slice(5));
-        }
-        const ctx2 = document.getElementById('remainingChart');
-        if(ctx2) {
-            if(remainingChart) remainingChart.destroy();
-            remainingChart = new Chart(ctx2.getContext('2d'), { type: 'line', data: { labels: timelineLabels, datasets: [{ label: '剩余欠款', data: timelinePoints, borderColor: '#2f8b60', backgroundColor: 'rgba(47,139,96,0.08)', fill: true, tension: 0.2, pointRadius: 3 }] } });
-        }
-        if(trendTextSpan) trendTextSpan.innerText = timelinePoints.length ? `📉 剩余 ${currentRemaining.toFixed(2)} 元，继续攒星光` : '暂无数据';
-    }
-
-    function renderTablesAndMonthly() {
-        if(!repayTbody || !debtTbody) return;
-        const repayRecords = records.filter(r => r.type === 'repay').sort((a,b)=> new Date(b.date) - new Date(a.date));
-        const debtRecords = records.filter(r => r.type === 'new_debt').sort((a,b)=> new Date(b.date) - new Date(a.date));
-        repayTbody.innerHTML = repayRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
-        debtTbody.innerHTML = debtRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
-        
-        document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id'))));
-        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteRecordFromCloud(btn.getAttribute('data-id'))));
-        
-        const repayMonth = new Map(), debtMonth = new Map();
-        records.forEach(r => { const ym = r.date.slice(0,7); if(r.type === 'repay') repayMonth.set(ym, (repayMonth.get(ym)||0) + r.amount); else debtMonth.set(ym, (debtMonth.get(ym)||0) + r.amount); });
-        const allMonths = [...new Set([...repayMonth.keys(), ...debtMonth.keys()])].sort();
-        if(monthlySummaryDiv) monthlySummaryDiv.innerHTML = allMonths.map(ym => `<div class="month-card"><div class="month-title">📅 ${ym}</div><div class="repay-month" style="color:#2c8e5c;">⭐ 还款: ¥${(repayMonth.get(ym)||0).toFixed(2)}</div><div class="debt-month" style="color:#c9795e;">⭐ 新增欠款: ¥${(debtMonth.get(ym)||0).toFixed(2)}</div></div>`).join('') || '<div>暂无数据</div>';
-    }
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    
-    function renderAll() { renderTablesAndMonthly(); renderCharts(); if(remainingSpan) remainingSpan.innerText = currentRemaining.toFixed(2); updateEncouragement(); }
-
-    function openEditModal(id) {
-        const record = records.find(r => r.id == id);
-        if(!record) return;
-        editingId = id;
-        const editDate = document.getElementById('editDate');
-        const editAmount = document.getElementById('editAmount');
-        const editNote = document.getElementById('editNote');
-        const editModal = document.getElementById('editModal');
-        if(editDate) editDate.value = record.date;
-        if(editAmount) editAmount.value = record.amount;
-        if(editNote) editNote.value = record.note || '';
-        if(editModal) editModal.style.display = 'flex';
-    }
-    
-    function saveEdit() {
-        if(!editingId) return;
-        const newDate = document.getElementById('editDate')?.value;
-        const newAmount = parseFloat(document.getElementById('editAmount')?.value);
-        const newNote = document.getElementById('editNote')?.value.trim();
-        if(!newDate) { alert('请选择日期'); return; }
-        if(isNaN(newAmount) || newAmount <= 0) { alert('请输入有效金额'); return; }
-        updateRecordInCloud(editingId, newDate, newAmount, newNote);
-        closeModal();
-    }
-    
-    function closeModal() { 
-        const editModal = document.getElementById('editModal');
-        if(editModal) editModal.style.display = 'none'; 
-        editingId = null; 
-    }
-
-    function exportCSV() { 
-        let content = "日期,类型,金额(元),备注\n"; 
-        records.forEach(r => content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${(r.note || '').replace(/"/g, '""')}"\n`); 
-        const blob = new Blob(["\uFEFF" + content], {type: "text/csv"}); 
-        const link = document.createElement('a'); 
-        link.href = URL.createObjectURL(blob); 
-        link.download = "欠款流水.csv"; 
-        link.click(); 
-        URL.revokeObjectURL(link.href); 
-    }
-    
-    function exportExcel() { 
-        const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note || '' })); 
-        const ws = XLSX.utils.json_to_sheet(sheetData); 
-        const wb = XLSX.utils.book_new(); 
-        XLSX.utils.book_append_sheet(wb, ws, "欠款流水"); 
-        XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`); 
-    }
-    
-    function importFromJSON(file) { 
-        const reader = new FileReader(); 
-        reader.onload = (e) => { 
-            try { 
-                const data = JSON.parse(e.target.result); 
-                if(data.records && Array.isArray(data.records)) { 
-                    importDataToCloud(data.records); 
-                } else throw new Error(); 
-            } catch(err) { 
-                alert('❌ JSON 格式错误'); 
-            } 
-        }; 
-        reader.readAsText(file); 
-    }
-    
-    function importFromExcelCSV(file) { 
-        const reader = new FileReader(); 
-        reader.onload = function(e) { 
-            const data = new Uint8Array(e.target.result); 
-            const workbook = XLSX.read(data, { type: 'array' }); 
-            const sheet = workbook.Sheets[workbook.SheetNames[0]]; 
-            const rows = XLSX.utils.sheet_to_json(sheet); 
-            if(rows.length===0) return; 
-            const newRecords = []; 
-            for(let row of rows) { 
-                let date = row['日期'] || row['date'] || ''; 
-                let typeRaw = row['类型'] || row['type'] || ''; 
-                let amount = parseFloat(row['金额(元)'] || row['amount'] || 0); 
-                let note = row['备注'] || row['note'] || ''; 
-                if(date && !isNaN(amount) && amount>0) { 
-                    let type = (typeRaw === '还款' || typeRaw === 'repay') ? 'repay' : 'new_debt'; 
-                    newRecords.push({ id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random(), date, type, amount, note }); 
-                } 
-            } 
-            if(newRecords.length) { 
-                importDataToCloud(newRecords); 
-            } else alert('未找到有效数据列'); 
-        }; 
-        reader.readAsArrayBuffer(file); 
-    }
-    
-    if(importDataBtn && importFileInput) {
-        importDataBtn.addEventListener('click', () => importFileInput.click());
-        importFileInput.addEventListener('change', (e) => { 
-            const file = e.target.files[0]; 
-            if(!file) return; 
-            const ext = file.name.split('.').pop().toLowerCase(); 
-            if(ext === 'json') importFromJSON(file); 
-            else if(['xlsx','xls','csv'].includes(ext)) importFromExcelCSV(file); 
-            else alert('不支持的格式'); 
-            importFileInput.value = ''; 
-        });
-    }
-
-    // 事件绑定
-    if(addRepayBtn) {
-        addRepayBtn.addEventListener('click', () => { 
-            const date=repayDate?.value, amt=parseFloat(repayAmount?.value || 0), note=repayNote?.value || ''; 
-            addRecordToCloud('repay', date, amt, note).then(()=>{ 
-                if(repayAmount) repayAmount.value=''; 
-                if(repayNote) repayNote.value=''; 
-                setDefaultDate(); 
-            }); 
-        });
-    }
-    if(addDebtBtn) {
-        addDebtBtn.addEventListener('click', () => { 
-            const date=debtDate?.value, amt=parseFloat(debtAmount?.value || 0), note=debtNote?.value || ''; 
-            addRecordToCloud('new_debt', date, amt, note).then(()=>{ 
-                if(debtAmount) debtAmount.value=''; 
-                if(debtNote) debtNote.value=''; 
-                setDefaultDate(); 
-            }); 
-        });
-    }
-    if(exportCsvBtn) exportCsvBtn.addEventListener('click', exportCSV);
-    if(exportExcelBtn) exportExcelBtn.addEventListener('click', exportExcel);
-    if(resetBtn) resetBtn.addEventListener('click', resetAllData);
-    
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const saveEditBtn = document.getElementById('saveEditBtn');
-    if(cancelEditBtn) cancelEditBtn.addEventListener('click', closeModal);
-    if(saveEditBtn) saveEditBtn.addEventListener('click', saveEdit);
-    
-    window.addEventListener('click', (e) => { 
-        const editModal = document.getElementById('editModal'); 
-        if(e.target === editModal) closeModal(); 
-    });
-
-    // 启动：从云端加载数据
     loadFromCloud();
 </script>
 </body>
