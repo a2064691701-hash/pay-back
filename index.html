@@ -252,7 +252,7 @@
         </div>
 
         <div class="tables-split">
-            <div class="table-section"><h4 class="repay-header">⭐ 还款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="repayTbody"></tbody></table></div>
+            <div class="table-section"><h4 class="repay-header">⭐ 还款记录</h4><tr><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="repayTbody"></tbody></table></div>
             <div class="table-section"><h4 class="debt-header">⭐ 新增欠款记录</h4><table><thead><tr><th>日期</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody id="debtTbody"></tbody></table></div>
         </div>
         <div class="footer-note">🍀 所有数据已上云 · 多端自动同步 · 可导入/导出备份 · 页面可缩放 · 暖心文案伴你同行</div>
@@ -273,7 +273,7 @@
     let currentRemaining = 0;
     let editingId = null;
 
-    // DOM 元素（添加了存在性检查，避免报错）
+    // DOM 元素
     const remainingSpan = document.getElementById('remainingAmount');
     const repayDate = document.getElementById('repayDate');
     const repayAmount = document.getElementById('repayAmount');
@@ -293,14 +293,9 @@
     const importFileInput = document.getElementById('importFileInput');
     const trendTextSpan = document.getElementById('trendText');
     const encourageDiv = document.getElementById('encourageMessage');
-    
-    // 修复：syncStatusSpan 不存在时，创建一个备用对象避免报错
-    let syncStatusSpan = document.getElementById('syncStatus');
-    if (!syncStatusSpan) {
-        syncStatusSpan = { innerHTML: '', style: { background: '', color: '' } };
-    }
+    const syncStatusSpan = document.getElementById('syncStatus');
 
-    // 修复：缩放功能 - 检查元素是否存在再绑定
+    // 缩放功能
     const zoomWrapper = document.getElementById('zoomWrapper');
     let currentZoom = 1;
     const zoomInBtn = document.getElementById('zoomInBtn');
@@ -345,7 +340,7 @@
     }
 
     function updateSyncStatus(status, isError = false) {
-        if (!syncStatusSpan || !syncStatusSpan.innerHTML) return;
+        if (!syncStatusSpan) return;
         if(isError) {
             syncStatusSpan.innerHTML = `⚠️ ${status}`;
             syncStatusSpan.style.background = "#fce4e4";
@@ -356,7 +351,7 @@
             syncStatusSpan.style.color = "#2c6e4a";
         }
         setTimeout(() => {
-            if(!isError && syncStatusSpan && syncStatusSpan.innerHTML) {
+            if(!isError && syncStatusSpan) {
                 syncStatusSpan.innerHTML = `☁️ 已同步`;
                 syncStatusSpan.style.background = "#e2f0ea";
                 syncStatusSpan.style.color = "#2c6e4a";
@@ -593,8 +588,8 @@
         if(!repayTbody || !debtTbody) return;
         const repayRecords = records.filter(r => r.type === 'repay').sort((a,b)=> new Date(b.date) - new Date(a.date));
         const debtRecords = records.filter(r => r.type === 'new_debt').sort((a,b)=> new Date(b.date) - new Date(a.date));
-        repayTbody.innerHTML = repayRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td>`).join('');
-        debtTbody.innerHTML = debtRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td>`).join('');
+        repayTbody.innerHTML = repayRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#2c8e5c;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
+        debtTbody.innerHTML = debtRecords.map(rec => `<tr><td>${rec.date}</td><td style="color:#c9795e;">¥ ${rec.amount.toFixed(2)}</td><td>${escapeHtml(rec.note)}</td><td><button class="action-btn edit-btn" data-id="${rec.id}">📝</button><button class="action-btn delete-btn" data-id="${rec.id}">🗑️</button></td></tr>`).join('');
         
         document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id'))));
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteRecordFromCloud(btn.getAttribute('data-id'))));
@@ -640,24 +635,99 @@
         editingId = null; 
     }
 
-    function exportToJSON() { const dataStr = JSON.stringify({ records, currentRemaining }, null, 2); const blob = new Blob([dataStr], {type: "application/json"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); }
-    function exportCSV() { let content = "日期,类型,金额(元),备注\n"; records.forEach(r => content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${r.note.replace(/"/g, '""')}"\n`); const blob = new Blob(["\uFEFF" + content], {type: "text/csv"}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = "欠款流水.csv"; link.click(); URL.revokeObjectURL(link.href); }
-    function exportExcel() { const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note })); const ws = XLSX.utils.json_to_sheet(sheetData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "欠款流水"); XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`); }
+    function exportCSV() { 
+        let content = "日期,类型,金额(元),备注\n"; 
+        records.forEach(r => content += `${r.date},${r.type === 'repay' ? '还款' : '新增欠款'},${r.amount},"${(r.note || '').replace(/"/g, '""')}"\n`); 
+        const blob = new Blob(["\uFEFF" + content], {type: "text/csv"}); 
+        const link = document.createElement('a'); 
+        link.href = URL.createObjectURL(blob); 
+        link.download = "欠款流水.csv"; 
+        link.click(); 
+        URL.revokeObjectURL(link.href); 
+    }
     
-    function importFromJSON(file) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.records && Array.isArray(data.records)) { importDataToCloud(data.records); } else throw new Error(); } catch(err) { alert('❌ JSON 格式错误'); } }; reader.readAsText(file); }
-    function importFromExcelCSV(file) { const reader = new FileReader(); reader.onload = function(e) { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet); if(rows.length===0) return; const newRecords = []; for(let row of rows) { let date = row['日期'] || row['date'] || ''; let typeRaw = row['类型'] || row['type'] || ''; let amount = parseFloat(row['金额(元)'] || row['amount'] || 0); let note = row['备注'] || row['note'] || ''; if(date && !isNaN(amount) && amount>0) { let type = (typeRaw === '还款' || typeRaw === 'repay') ? 'repay' : 'new_debt'; newRecords.push({ id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random(), date, type, amount, note }); } } if(newRecords.length) { importDataToCloud(newRecords); } else alert('未找到有效数据列'); }; reader.readAsArrayBuffer(file); }
+    function exportExcel() { 
+        const sheetData = records.map(r => ({ '日期': r.date, '类型': r.type === 'repay' ? '还款' : '新增欠款', '金额(元)': r.amount, '备注': r.note || '' })); 
+        const ws = XLSX.utils.json_to_sheet(sheetData); 
+        const wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, "欠款流水"); 
+        XLSX.writeFile(wb, `欠款记录_${new Date().toISOString().slice(0,10)}.xlsx`); 
+    }
+    
+    function importFromJSON(file) { 
+        const reader = new FileReader(); 
+        reader.onload = (e) => { 
+            try { 
+                const data = JSON.parse(e.target.result); 
+                if(data.records && Array.isArray(data.records)) { 
+                    importDataToCloud(data.records); 
+                } else throw new Error(); 
+            } catch(err) { 
+                alert('❌ JSON 格式错误'); 
+            } 
+        }; 
+        reader.readAsText(file); 
+    }
+    
+    function importFromExcelCSV(file) { 
+        const reader = new FileReader(); 
+        reader.onload = function(e) { 
+            const data = new Uint8Array(e.target.result); 
+            const workbook = XLSX.read(data, { type: 'array' }); 
+            const sheet = workbook.Sheets[workbook.SheetNames[0]]; 
+            const rows = XLSX.utils.sheet_to_json(sheet); 
+            if(rows.length===0) return; 
+            const newRecords = []; 
+            for(let row of rows) { 
+                let date = row['日期'] || row['date'] || ''; 
+                let typeRaw = row['类型'] || row['type'] || ''; 
+                let amount = parseFloat(row['金额(元)'] || row['amount'] || 0); 
+                let note = row['备注'] || row['note'] || ''; 
+                if(date && !isNaN(amount) && amount>0) { 
+                    let type = (typeRaw === '还款' || typeRaw === 'repay') ? 'repay' : 'new_debt'; 
+                    newRecords.push({ id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random(), date, type, amount, note }); 
+                } 
+            } 
+            if(newRecords.length) { 
+                importDataToCloud(newRecords); 
+            } else alert('未找到有效数据列'); 
+        }; 
+        reader.readAsArrayBuffer(file); 
+    }
     
     if(importDataBtn && importFileInput) {
         importDataBtn.addEventListener('click', () => importFileInput.click());
-        importFileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if(!file) return; const ext = file.name.split('.').pop().toLowerCase(); if(ext === 'json') importFromJSON(file); else if(['xlsx','xls','csv'].includes(ext)) importFromExcelCSV(file); else alert('不支持的格式'); importFileInput.value = ''; });
+        importFileInput.addEventListener('change', (e) => { 
+            const file = e.target.files[0]; 
+            if(!file) return; 
+            const ext = file.name.split('.').pop().toLowerCase(); 
+            if(ext === 'json') importFromJSON(file); 
+            else if(['xlsx','xls','csv'].includes(ext)) importFromExcelCSV(file); 
+            else alert('不支持的格式'); 
+            importFileInput.value = ''; 
+        });
     }
 
-    // 事件绑定（添加存在性检查）
+    // 事件绑定
     if(addRepayBtn) {
-        addRepayBtn.addEventListener('click', () => { const date=repayDate?.value, amt=parseFloat(repayAmount?.value || 0), note=repayNote?.value || ''; addRecordToCloud('repay',date,amt,note).then(()=>{ if(repayAmount) repayAmount.value=''; if(repayNote) repayNote.value=''; setDefaultDate(); }); });
+        addRepayBtn.addEventListener('click', () => { 
+            const date=repayDate?.value, amt=parseFloat(repayAmount?.value || 0), note=repayNote?.value || ''; 
+            addRecordToCloud('repay', date, amt, note).then(()=>{ 
+                if(repayAmount) repayAmount.value=''; 
+                if(repayNote) repayNote.value=''; 
+                setDefaultDate(); 
+            }); 
+        });
     }
     if(addDebtBtn) {
-        addDebtBtn.addEventListener('click', () => { const date=debtDate?.value, amt=parseFloat(debtAmount?.value || 0), note=debtNote?.value || ''; addRecordToCloud('new_debt',date,amt,note).then(()=>{ if(debtAmount) debtAmount.value=''; if(debtNote) debtNote.value=''; setDefaultDate(); }); });
+        addDebtBtn.addEventListener('click', () => { 
+            const date=debtDate?.value, amt=parseFloat(debtAmount?.value || 0), note=debtNote?.value || ''; 
+            addRecordToCloud('new_debt', date, amt, note).then(()=>{ 
+                if(debtAmount) debtAmount.value=''; 
+                if(debtNote) debtNote.value=''; 
+                setDefaultDate(); 
+            }); 
+        });
     }
     if(exportCsvBtn) exportCsvBtn.addEventListener('click', exportCSV);
     if(exportExcelBtn) exportExcelBtn.addEventListener('click', exportExcel);
@@ -668,11 +738,13 @@
     if(cancelEditBtn) cancelEditBtn.addEventListener('click', closeModal);
     if(saveEditBtn) saveEditBtn.addEventListener('click', saveEdit);
     
-    window.addEventListener('click', (e) => { const editModal = document.getElementById('editModal'); if(e.target === editModal) closeModal(); });
+    window.addEventListener('click', (e) => { 
+        const editModal = document.getElementById('editModal'); 
+        if(e.target === editModal) closeModal(); 
+    });
 
     // 启动：从云端加载数据
     loadFromCloud();
-</script>
 </script>
 </body>
 </html>
